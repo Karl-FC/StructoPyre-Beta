@@ -2,7 +2,18 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class DPadController : MonoBehaviour
+
 {
+    [SerializeField] private GameObject dpadUI;
+
+private void Awake()
+    {
+        if (dpadUI != null)
+        {
+            dpadUI.SetActive(Application.isMobilePlatform);
+        }
+    }
+
     private Vector2 dPadInput;
 
     public void OnDPadUpPressed(InputAction.CallbackContext context)

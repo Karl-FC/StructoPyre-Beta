@@ -18,10 +18,12 @@ public class CameraMovement : MonoBehaviour
             Debug.LogWarning("ERROR: DPadController reference is missing.");
         }
 
-        if (walkSpeed < 0 || CamSensitivity < 0) 
+        if (walkSpeed <= 0 || CamSensitivity <= 0) 
         {
             Debug.LogWarning("ERROR: WalkSpeed and Camera Sensitivity is invalid");
         }
+
+        
     }
 
     private void OnEnable()
