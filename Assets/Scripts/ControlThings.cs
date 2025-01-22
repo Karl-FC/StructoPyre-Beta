@@ -793,6 +793,138 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""DPAD"",
+            ""id"": ""dc79a600-2b25-4633-9411-9ec31f56bd19"",
+            ""actions"": [
+                {
+                    ""name"": ""UP Button"",
+                    ""type"": ""Button"",
+                    ""id"": ""44efe547-9106-47ce-8a29-5383465d2d02"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""DOWN Button"",
+                    ""type"": ""Button"",
+                    ""id"": ""7c519de1-60c3-47b2-958c-377796afec17"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""LEFT Button"",
+                    ""type"": ""Button"",
+                    ""id"": ""ea3b04b5-2e50-474b-a1d5-1624438cf190"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""RIGHT Button"",
+                    ""type"": ""Button"",
+                    ""id"": ""72a4f49e-8e63-4293-9cef-a0859ccb0773"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""4c71dac5-0a8f-4a07-b364-fb02fa2030d7"",
+                    ""path"": ""<Keyboard>/upArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""UP Button"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e63dfcd3-6436-4450-a80e-1c0a45609a95"",
+                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""UP Button"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2a865c28-557f-41de-9d43-e13c32862725"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""DOWN Button"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c25e868a-8b61-45fb-a7e6-ae949768c9df"",
+                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""DOWN Button"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8f89c4c3-c484-4bfe-89c4-f5c6a0bf849c"",
+                    ""path"": ""<Keyboard>/leftArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LEFT Button"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2446aa67-7724-4bfe-90a6-b1981aa15b8b"",
+                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LEFT Button"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""31712e86-edaf-4978-afc6-b0ac3a0ee2b5"",
+                    ""path"": ""<Keyboard>/rightArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RIGHT Button"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2c07e8ce-7938-4d3c-8698-fcb88b7db40d"",
+                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RIGHT Button"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -875,12 +1007,19 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
         m_UI_RightClick = m_UI.FindAction("RightClick", throwIfNotFound: true);
         m_UI_TrackedDevicePosition = m_UI.FindAction("TrackedDevicePosition", throwIfNotFound: true);
         m_UI_TrackedDeviceOrientation = m_UI.FindAction("TrackedDeviceOrientation", throwIfNotFound: true);
+        // DPAD
+        m_DPAD = asset.FindActionMap("DPAD", throwIfNotFound: true);
+        m_DPAD_UPButton = m_DPAD.FindAction("UP Button", throwIfNotFound: true);
+        m_DPAD_DOWNButton = m_DPAD.FindAction("DOWN Button", throwIfNotFound: true);
+        m_DPAD_LEFTButton = m_DPAD.FindAction("LEFT Button", throwIfNotFound: true);
+        m_DPAD_RIGHTButton = m_DPAD.FindAction("RIGHT Button", throwIfNotFound: true);
     }
 
     ~@ControlThings()
     {
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, ControlThings.Player.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_UI.enabled, "This will cause a leak and performance issues, ControlThings.UI.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_DPAD.enabled, "This will cause a leak and performance issues, ControlThings.DPAD.Disable() has not been called.");
     }
 
     public void Dispose()
@@ -1118,6 +1257,76 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
         }
     }
     public UIActions @UI => new UIActions(this);
+
+    // DPAD
+    private readonly InputActionMap m_DPAD;
+    private List<IDPADActions> m_DPADActionsCallbackInterfaces = new List<IDPADActions>();
+    private readonly InputAction m_DPAD_UPButton;
+    private readonly InputAction m_DPAD_DOWNButton;
+    private readonly InputAction m_DPAD_LEFTButton;
+    private readonly InputAction m_DPAD_RIGHTButton;
+    public struct DPADActions
+    {
+        private @ControlThings m_Wrapper;
+        public DPADActions(@ControlThings wrapper) { m_Wrapper = wrapper; }
+        public InputAction @UPButton => m_Wrapper.m_DPAD_UPButton;
+        public InputAction @DOWNButton => m_Wrapper.m_DPAD_DOWNButton;
+        public InputAction @LEFTButton => m_Wrapper.m_DPAD_LEFTButton;
+        public InputAction @RIGHTButton => m_Wrapper.m_DPAD_RIGHTButton;
+        public InputActionMap Get() { return m_Wrapper.m_DPAD; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(DPADActions set) { return set.Get(); }
+        public void AddCallbacks(IDPADActions instance)
+        {
+            if (instance == null || m_Wrapper.m_DPADActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_DPADActionsCallbackInterfaces.Add(instance);
+            @UPButton.started += instance.OnUPButton;
+            @UPButton.performed += instance.OnUPButton;
+            @UPButton.canceled += instance.OnUPButton;
+            @DOWNButton.started += instance.OnDOWNButton;
+            @DOWNButton.performed += instance.OnDOWNButton;
+            @DOWNButton.canceled += instance.OnDOWNButton;
+            @LEFTButton.started += instance.OnLEFTButton;
+            @LEFTButton.performed += instance.OnLEFTButton;
+            @LEFTButton.canceled += instance.OnLEFTButton;
+            @RIGHTButton.started += instance.OnRIGHTButton;
+            @RIGHTButton.performed += instance.OnRIGHTButton;
+            @RIGHTButton.canceled += instance.OnRIGHTButton;
+        }
+
+        private void UnregisterCallbacks(IDPADActions instance)
+        {
+            @UPButton.started -= instance.OnUPButton;
+            @UPButton.performed -= instance.OnUPButton;
+            @UPButton.canceled -= instance.OnUPButton;
+            @DOWNButton.started -= instance.OnDOWNButton;
+            @DOWNButton.performed -= instance.OnDOWNButton;
+            @DOWNButton.canceled -= instance.OnDOWNButton;
+            @LEFTButton.started -= instance.OnLEFTButton;
+            @LEFTButton.performed -= instance.OnLEFTButton;
+            @LEFTButton.canceled -= instance.OnLEFTButton;
+            @RIGHTButton.started -= instance.OnRIGHTButton;
+            @RIGHTButton.performed -= instance.OnRIGHTButton;
+            @RIGHTButton.canceled -= instance.OnRIGHTButton;
+        }
+
+        public void RemoveCallbacks(IDPADActions instance)
+        {
+            if (m_Wrapper.m_DPADActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(IDPADActions instance)
+        {
+            foreach (var item in m_Wrapper.m_DPADActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_DPADActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public DPADActions @DPAD => new DPADActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     public InputControlScheme KeyboardMouseScheme
     {
@@ -1181,5 +1390,12 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
         void OnRightClick(InputAction.CallbackContext context);
         void OnTrackedDevicePosition(InputAction.CallbackContext context);
         void OnTrackedDeviceOrientation(InputAction.CallbackContext context);
+    }
+    public interface IDPADActions
+    {
+        void OnUPButton(InputAction.CallbackContext context);
+        void OnDOWNButton(InputAction.CallbackContext context);
+        void OnLEFTButton(InputAction.CallbackContext context);
+        void OnRIGHTButton(InputAction.CallbackContext context);
     }
 }
