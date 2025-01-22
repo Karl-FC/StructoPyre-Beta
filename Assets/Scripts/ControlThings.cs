@@ -793,6 +793,169 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""Cross Platform"",
+            ""id"": ""25eda82e-8855-478e-a60c-1316297f5876"",
+            ""actions"": [
+                {
+                    ""name"": ""GoLeft"",
+                    ""type"": ""Button"",
+                    ""id"": ""da40859f-34e1-4b84-99f2-61206daa5a46"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""GoRight"",
+                    ""type"": ""Button"",
+                    ""id"": ""8b3498d7-e469-472e-8c04-6b6e37430c67"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""GoUp"",
+                    ""type"": ""Button"",
+                    ""id"": ""9b6b1c12-d95f-47d5-9053-4a45303a42a9"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""GoDown"",
+                    ""type"": ""Button"",
+                    ""id"": ""645a27a7-86ff-4d68-9049-3c041c63eccb"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Spawn"",
+                    ""type"": ""Button"",
+                    ""id"": ""5c89c40a-f6ca-438d-b7e7-c9f19282600c"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""8d83c5ce-cb74-4130-879a-5fe16ba59eda"",
+                    ""path"": ""<Keyboard>/leftArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""GoLeft"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bd5e6598-d452-45f8-8e2a-4735fef16b04"",
+                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""GoLeft"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""70661913-15d4-4902-ae40-bf215d9abaf1"",
+                    ""path"": ""<Keyboard>/rightArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""GoRight"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d2bba438-251b-4e91-a29c-23e1552301bd"",
+                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""GoRight"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e6f72f55-aeba-4c1d-a7aa-bd4a8f5d855f"",
+                    ""path"": ""<Keyboard>/upArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""GoUp"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""28af1156-ba9b-4783-923f-b2bc98303329"",
+                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""GoUp"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0b784d3b-3a79-4364-936f-77ab9f0470d1"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""GoDown"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4856cdcb-f481-4ac5-a35f-56ead03b4b45"",
+                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""GoDown"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bd7f5ee5-4ad0-4d61-93bd-9aafc687ef09"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Spawn"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""62b0a650-7651-4def-ba2b-917f958ce5e5"",
+                    ""path"": ""<Keyboard>/#(C)"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Spawn"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -875,12 +1038,20 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
         m_UI_RightClick = m_UI.FindAction("RightClick", throwIfNotFound: true);
         m_UI_TrackedDevicePosition = m_UI.FindAction("TrackedDevicePosition", throwIfNotFound: true);
         m_UI_TrackedDeviceOrientation = m_UI.FindAction("TrackedDeviceOrientation", throwIfNotFound: true);
+        // Cross Platform
+        m_CrossPlatform = asset.FindActionMap("Cross Platform", throwIfNotFound: true);
+        m_CrossPlatform_GoLeft = m_CrossPlatform.FindAction("GoLeft", throwIfNotFound: true);
+        m_CrossPlatform_GoRight = m_CrossPlatform.FindAction("GoRight", throwIfNotFound: true);
+        m_CrossPlatform_GoUp = m_CrossPlatform.FindAction("GoUp", throwIfNotFound: true);
+        m_CrossPlatform_GoDown = m_CrossPlatform.FindAction("GoDown", throwIfNotFound: true);
+        m_CrossPlatform_Spawn = m_CrossPlatform.FindAction("Spawn", throwIfNotFound: true);
     }
 
     ~@ControlThings()
     {
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, ControlThings.Player.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_UI.enabled, "This will cause a leak and performance issues, ControlThings.UI.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_CrossPlatform.enabled, "This will cause a leak and performance issues, ControlThings.CrossPlatform.Disable() has not been called.");
     }
 
     public void Dispose()
@@ -1118,6 +1289,84 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
         }
     }
     public UIActions @UI => new UIActions(this);
+
+    // Cross Platform
+    private readonly InputActionMap m_CrossPlatform;
+    private List<ICrossPlatformActions> m_CrossPlatformActionsCallbackInterfaces = new List<ICrossPlatformActions>();
+    private readonly InputAction m_CrossPlatform_GoLeft;
+    private readonly InputAction m_CrossPlatform_GoRight;
+    private readonly InputAction m_CrossPlatform_GoUp;
+    private readonly InputAction m_CrossPlatform_GoDown;
+    private readonly InputAction m_CrossPlatform_Spawn;
+    public struct CrossPlatformActions
+    {
+        private @ControlThings m_Wrapper;
+        public CrossPlatformActions(@ControlThings wrapper) { m_Wrapper = wrapper; }
+        public InputAction @GoLeft => m_Wrapper.m_CrossPlatform_GoLeft;
+        public InputAction @GoRight => m_Wrapper.m_CrossPlatform_GoRight;
+        public InputAction @GoUp => m_Wrapper.m_CrossPlatform_GoUp;
+        public InputAction @GoDown => m_Wrapper.m_CrossPlatform_GoDown;
+        public InputAction @Spawn => m_Wrapper.m_CrossPlatform_Spawn;
+        public InputActionMap Get() { return m_Wrapper.m_CrossPlatform; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(CrossPlatformActions set) { return set.Get(); }
+        public void AddCallbacks(ICrossPlatformActions instance)
+        {
+            if (instance == null || m_Wrapper.m_CrossPlatformActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_CrossPlatformActionsCallbackInterfaces.Add(instance);
+            @GoLeft.started += instance.OnGoLeft;
+            @GoLeft.performed += instance.OnGoLeft;
+            @GoLeft.canceled += instance.OnGoLeft;
+            @GoRight.started += instance.OnGoRight;
+            @GoRight.performed += instance.OnGoRight;
+            @GoRight.canceled += instance.OnGoRight;
+            @GoUp.started += instance.OnGoUp;
+            @GoUp.performed += instance.OnGoUp;
+            @GoUp.canceled += instance.OnGoUp;
+            @GoDown.started += instance.OnGoDown;
+            @GoDown.performed += instance.OnGoDown;
+            @GoDown.canceled += instance.OnGoDown;
+            @Spawn.started += instance.OnSpawn;
+            @Spawn.performed += instance.OnSpawn;
+            @Spawn.canceled += instance.OnSpawn;
+        }
+
+        private void UnregisterCallbacks(ICrossPlatformActions instance)
+        {
+            @GoLeft.started -= instance.OnGoLeft;
+            @GoLeft.performed -= instance.OnGoLeft;
+            @GoLeft.canceled -= instance.OnGoLeft;
+            @GoRight.started -= instance.OnGoRight;
+            @GoRight.performed -= instance.OnGoRight;
+            @GoRight.canceled -= instance.OnGoRight;
+            @GoUp.started -= instance.OnGoUp;
+            @GoUp.performed -= instance.OnGoUp;
+            @GoUp.canceled -= instance.OnGoUp;
+            @GoDown.started -= instance.OnGoDown;
+            @GoDown.performed -= instance.OnGoDown;
+            @GoDown.canceled -= instance.OnGoDown;
+            @Spawn.started -= instance.OnSpawn;
+            @Spawn.performed -= instance.OnSpawn;
+            @Spawn.canceled -= instance.OnSpawn;
+        }
+
+        public void RemoveCallbacks(ICrossPlatformActions instance)
+        {
+            if (m_Wrapper.m_CrossPlatformActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(ICrossPlatformActions instance)
+        {
+            foreach (var item in m_Wrapper.m_CrossPlatformActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_CrossPlatformActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public CrossPlatformActions @CrossPlatform => new CrossPlatformActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     public InputControlScheme KeyboardMouseScheme
     {
@@ -1181,5 +1430,13 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
         void OnRightClick(InputAction.CallbackContext context);
         void OnTrackedDevicePosition(InputAction.CallbackContext context);
         void OnTrackedDeviceOrientation(InputAction.CallbackContext context);
+    }
+    public interface ICrossPlatformActions
+    {
+        void OnGoLeft(InputAction.CallbackContext context);
+        void OnGoRight(InputAction.CallbackContext context);
+        void OnGoUp(InputAction.CallbackContext context);
+        void OnGoDown(InputAction.CallbackContext context);
+        void OnSpawn(InputAction.CallbackContext context);
     }
 }
