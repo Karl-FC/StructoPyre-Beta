@@ -773,7 +773,7 @@
             ]
         },
         {
-            "name": "MOBILE",
+            "name": "Cross Platform",
             "id": "25eda82e-8855-478e-a60c-1316297f5876",
             "actions": [
                 {
@@ -807,6 +807,15 @@
                     "name": "GoDown",
                     "type": "Button",
                     "id": "645a27a7-86ff-4d68-9049-3c041c63eccb",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Spawn",
+                    "type": "Button",
+                    "id": "5c89c40a-f6ca-438d-b7e7-c9f19282600c",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -899,6 +908,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "GoDown",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "bd7f5ee5-4ad0-4d61-93bd-9aafc687ef09",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Spawn",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "62b0a650-7651-4def-ba2b-917f958ce5e5",
+                    "path": "<Keyboard>/#(C)",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Spawn",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -795,7 +795,7 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
             ]
         },
         {
-            ""name"": ""MOBILE"",
+            ""name"": ""Cross Platform"",
             ""id"": ""25eda82e-8855-478e-a60c-1316297f5876"",
             ""actions"": [
                 {
@@ -829,6 +829,15 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
                     ""name"": ""GoDown"",
                     ""type"": ""Button"",
                     ""id"": ""645a27a7-86ff-4d68-9049-3c041c63eccb"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Spawn"",
+                    ""type"": ""Button"",
+                    ""id"": ""5c89c40a-f6ca-438d-b7e7-c9f19282600c"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -923,6 +932,28 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
                     ""action"": ""GoDown"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""bd7f5ee5-4ad0-4d61-93bd-9aafc687ef09"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Spawn"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""62b0a650-7651-4def-ba2b-917f958ce5e5"",
+                    ""path"": ""<Keyboard>/#(C)"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Spawn"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -1007,19 +1038,20 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
         m_UI_RightClick = m_UI.FindAction("RightClick", throwIfNotFound: true);
         m_UI_TrackedDevicePosition = m_UI.FindAction("TrackedDevicePosition", throwIfNotFound: true);
         m_UI_TrackedDeviceOrientation = m_UI.FindAction("TrackedDeviceOrientation", throwIfNotFound: true);
-        // MOBILE
-        m_MOBILE = asset.FindActionMap("MOBILE", throwIfNotFound: true);
-        m_MOBILE_GoLeft = m_MOBILE.FindAction("GoLeft", throwIfNotFound: true);
-        m_MOBILE_GoRight = m_MOBILE.FindAction("GoRight", throwIfNotFound: true);
-        m_MOBILE_GoUp = m_MOBILE.FindAction("GoUp", throwIfNotFound: true);
-        m_MOBILE_GoDown = m_MOBILE.FindAction("GoDown", throwIfNotFound: true);
+        // Cross Platform
+        m_CrossPlatform = asset.FindActionMap("Cross Platform", throwIfNotFound: true);
+        m_CrossPlatform_GoLeft = m_CrossPlatform.FindAction("GoLeft", throwIfNotFound: true);
+        m_CrossPlatform_GoRight = m_CrossPlatform.FindAction("GoRight", throwIfNotFound: true);
+        m_CrossPlatform_GoUp = m_CrossPlatform.FindAction("GoUp", throwIfNotFound: true);
+        m_CrossPlatform_GoDown = m_CrossPlatform.FindAction("GoDown", throwIfNotFound: true);
+        m_CrossPlatform_Spawn = m_CrossPlatform.FindAction("Spawn", throwIfNotFound: true);
     }
 
     ~@ControlThings()
     {
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, ControlThings.Player.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_UI.enabled, "This will cause a leak and performance issues, ControlThings.UI.Disable() has not been called.");
-        UnityEngine.Debug.Assert(!m_MOBILE.enabled, "This will cause a leak and performance issues, ControlThings.MOBILE.Disable() has not been called.");
+        UnityEngine.Debug.Assert(!m_CrossPlatform.enabled, "This will cause a leak and performance issues, ControlThings.CrossPlatform.Disable() has not been called.");
     }
 
     public void Dispose()
@@ -1258,30 +1290,32 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
     }
     public UIActions @UI => new UIActions(this);
 
-    // MOBILE
-    private readonly InputActionMap m_MOBILE;
-    private List<IMOBILEActions> m_MOBILEActionsCallbackInterfaces = new List<IMOBILEActions>();
-    private readonly InputAction m_MOBILE_GoLeft;
-    private readonly InputAction m_MOBILE_GoRight;
-    private readonly InputAction m_MOBILE_GoUp;
-    private readonly InputAction m_MOBILE_GoDown;
-    public struct MOBILEActions
+    // Cross Platform
+    private readonly InputActionMap m_CrossPlatform;
+    private List<ICrossPlatformActions> m_CrossPlatformActionsCallbackInterfaces = new List<ICrossPlatformActions>();
+    private readonly InputAction m_CrossPlatform_GoLeft;
+    private readonly InputAction m_CrossPlatform_GoRight;
+    private readonly InputAction m_CrossPlatform_GoUp;
+    private readonly InputAction m_CrossPlatform_GoDown;
+    private readonly InputAction m_CrossPlatform_Spawn;
+    public struct CrossPlatformActions
     {
         private @ControlThings m_Wrapper;
-        public MOBILEActions(@ControlThings wrapper) { m_Wrapper = wrapper; }
-        public InputAction @GoLeft => m_Wrapper.m_MOBILE_GoLeft;
-        public InputAction @GoRight => m_Wrapper.m_MOBILE_GoRight;
-        public InputAction @GoUp => m_Wrapper.m_MOBILE_GoUp;
-        public InputAction @GoDown => m_Wrapper.m_MOBILE_GoDown;
-        public InputActionMap Get() { return m_Wrapper.m_MOBILE; }
+        public CrossPlatformActions(@ControlThings wrapper) { m_Wrapper = wrapper; }
+        public InputAction @GoLeft => m_Wrapper.m_CrossPlatform_GoLeft;
+        public InputAction @GoRight => m_Wrapper.m_CrossPlatform_GoRight;
+        public InputAction @GoUp => m_Wrapper.m_CrossPlatform_GoUp;
+        public InputAction @GoDown => m_Wrapper.m_CrossPlatform_GoDown;
+        public InputAction @Spawn => m_Wrapper.m_CrossPlatform_Spawn;
+        public InputActionMap Get() { return m_Wrapper.m_CrossPlatform; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
         public bool enabled => Get().enabled;
-        public static implicit operator InputActionMap(MOBILEActions set) { return set.Get(); }
-        public void AddCallbacks(IMOBILEActions instance)
+        public static implicit operator InputActionMap(CrossPlatformActions set) { return set.Get(); }
+        public void AddCallbacks(ICrossPlatformActions instance)
         {
-            if (instance == null || m_Wrapper.m_MOBILEActionsCallbackInterfaces.Contains(instance)) return;
-            m_Wrapper.m_MOBILEActionsCallbackInterfaces.Add(instance);
+            if (instance == null || m_Wrapper.m_CrossPlatformActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_CrossPlatformActionsCallbackInterfaces.Add(instance);
             @GoLeft.started += instance.OnGoLeft;
             @GoLeft.performed += instance.OnGoLeft;
             @GoLeft.canceled += instance.OnGoLeft;
@@ -1294,9 +1328,12 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
             @GoDown.started += instance.OnGoDown;
             @GoDown.performed += instance.OnGoDown;
             @GoDown.canceled += instance.OnGoDown;
+            @Spawn.started += instance.OnSpawn;
+            @Spawn.performed += instance.OnSpawn;
+            @Spawn.canceled += instance.OnSpawn;
         }
 
-        private void UnregisterCallbacks(IMOBILEActions instance)
+        private void UnregisterCallbacks(ICrossPlatformActions instance)
         {
             @GoLeft.started -= instance.OnGoLeft;
             @GoLeft.performed -= instance.OnGoLeft;
@@ -1310,23 +1347,26 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
             @GoDown.started -= instance.OnGoDown;
             @GoDown.performed -= instance.OnGoDown;
             @GoDown.canceled -= instance.OnGoDown;
+            @Spawn.started -= instance.OnSpawn;
+            @Spawn.performed -= instance.OnSpawn;
+            @Spawn.canceled -= instance.OnSpawn;
         }
 
-        public void RemoveCallbacks(IMOBILEActions instance)
+        public void RemoveCallbacks(ICrossPlatformActions instance)
         {
-            if (m_Wrapper.m_MOBILEActionsCallbackInterfaces.Remove(instance))
+            if (m_Wrapper.m_CrossPlatformActionsCallbackInterfaces.Remove(instance))
                 UnregisterCallbacks(instance);
         }
 
-        public void SetCallbacks(IMOBILEActions instance)
+        public void SetCallbacks(ICrossPlatformActions instance)
         {
-            foreach (var item in m_Wrapper.m_MOBILEActionsCallbackInterfaces)
+            foreach (var item in m_Wrapper.m_CrossPlatformActionsCallbackInterfaces)
                 UnregisterCallbacks(item);
-            m_Wrapper.m_MOBILEActionsCallbackInterfaces.Clear();
+            m_Wrapper.m_CrossPlatformActionsCallbackInterfaces.Clear();
             AddCallbacks(instance);
         }
     }
-    public MOBILEActions @MOBILE => new MOBILEActions(this);
+    public CrossPlatformActions @CrossPlatform => new CrossPlatformActions(this);
     private int m_KeyboardMouseSchemeIndex = -1;
     public InputControlScheme KeyboardMouseScheme
     {
@@ -1391,11 +1431,12 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
         void OnTrackedDevicePosition(InputAction.CallbackContext context);
         void OnTrackedDeviceOrientation(InputAction.CallbackContext context);
     }
-    public interface IMOBILEActions
+    public interface ICrossPlatformActions
     {
         void OnGoLeft(InputAction.CallbackContext context);
         void OnGoRight(InputAction.CallbackContext context);
         void OnGoUp(InputAction.CallbackContext context);
         void OnGoDown(InputAction.CallbackContext context);
+        void OnSpawn(InputAction.CallbackContext context);
     }
 }
