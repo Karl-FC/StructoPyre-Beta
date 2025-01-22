@@ -12,7 +12,11 @@ private void Awake()
         {
             //dpadUI.SetActive(Application.isMobilePlatform);
             dpadUI.SetActive(true);
-            if (Application.isMobilePlatform) Debug.Log("User is on mobile lol");
+            if (Application.isMobilePlatform) Debug.Log("User using mobile"); 
+            else
+            {
+                Debug.Log("User is NOT on mobile lol");
+            }
         }
     }
 
