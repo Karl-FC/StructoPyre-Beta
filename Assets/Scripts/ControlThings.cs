@@ -936,7 +936,7 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""bd7f5ee5-4ad0-4d61-93bd-9aafc687ef09"",
-                    ""path"": """",
+                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
