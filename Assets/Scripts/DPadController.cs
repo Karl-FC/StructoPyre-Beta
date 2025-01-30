@@ -5,46 +5,60 @@ public class DPadController : MonoBehaviour
 
 {
     [SerializeField] private GameObject dpadUI;
+    private Vector2 dPadInput;
+    private ControlThings inputActions;
+
+
 
 private void Awake()
     {
-        if (dpadUI != null)
-        {
-            //dpadUI.SetActive(Application.isMobilePlatform);
-            dpadUI.SetActive(true);
-            if (Application.isMobilePlatform) Debug.Log("User using mobile"); 
-            else
-            {
-                Debug.Log("User is NOT on mobile lol");
-            }
-        }
+        if (dpadUI == null)
+            Debug.LogWarning("DPad UI reference is missing!");
+            
+        inputActions = new ControlThings();
+    }
+private void OnEnable()
+    {
+        inputActions?.Enable();
     }
 
-    private Vector2 dPadInput;
+    private void OnDisable()
+    {
+        inputActions?.Disable();
+    }
 
+
+//INPUTSSSSSSSSSSSSSSSS
+ private void SetVerticalInput(float value)
+    {
+        dPadInput.y = value;
+        Debug.Log($"Vertical input: {value}");
+    }
+
+    private void SetHorizontalInput(float value)
+    {
+        dPadInput.x = value;
+        Debug.Log($"Horizontal input: {value}");
+    }
+
+    // Input System methods
     public void OnDPadUpPressed(InputAction.CallbackContext context)
     {
-        if (context.performed) dPadInput.y = 1;
-        if (context.canceled) dPadInput.y = 0;
+        if (context.performed) SetVerticalInput(1);
+        if (context.canceled) SetVerticalInput(0);
     }
 
     public void OnDPadDownPressed(InputAction.CallbackContext context)
     {
-        if (context.performed) dPadInput.y = -1;
-        if (context.canceled) dPadInput.y = 0;
+        if (context.performed) SetVerticalInput(-1);
+        if (context.canceled) SetVerticalInput(0);
     }
 
-    public void OnDPadLeftPressed(InputAction.CallbackContext context)
-    {
-        if (context.performed) dPadInput.x = -1;
-        if (context.canceled) dPadInput.x = 0;
-    }
-
-    public void OnDPadRightPressed(InputAction.CallbackContext context)
-    {
-        if (context.performed) dPadInput.x = 1;
-        if (context.canceled) dPadInput.x = 0;
-    }
+    // UI Button methods
+    public void OnUpButtonClick() => SetVerticalInput(1);
+    public void OnUpButtonRelease() => SetVerticalInput(0);
+    public void OnDownButtonClick() => SetVerticalInput(-1);
+    public void OnDownButtonRelease() => SetVerticalInput(0);
 
     public Vector2 GetDPadInput()
     {
