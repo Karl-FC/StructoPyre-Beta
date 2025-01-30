@@ -9,15 +9,67 @@ public class MainMenu : MonoBehaviour
 
     private void Awake()
     {
-        // Initial setup
+// Initial setup
         MainMenuGUI.SetActive(true);
-        if (dpadUI != null)
-        {
-            dpadUI.SetActive(false);
-        }
-        Cursor.visible = true; // Show cursor on main menu
+                if (dpadUI != null)
+                {
+                    dpadUI.SetActive(GlobalVariables.isDPadEnabled); // initially FALSE
+                }
+        Cursor.visible = true; // TRUE sa main menu
        DisablePlayerControls();
     }
+
+
+
+//Ilagay to sa buttons or kung ano pang script
+
+
+     private void DisablePlayerControls()
+    {
+        //Disable controls
+        if (playerMovements!= null)
+        {
+            playerMovements.enabled = false;
+            GlobalVariables.playerCanMove = false;
+        }
+    }
+
+     private void EnablePlayerControls()
+    {
+        //Enable controls
+            if (playerMovements!= null)
+            {
+                playerMovements.enabled = true;
+                GlobalVariables.playerCanMove = true;    
+            }
+        //Disable Mouse
+            Cursor.visible = GlobalVariables.isMouseVisible;
+        //Enable DPad
+            if (dpadUI != null)
+                {
+                    dpadUI.SetActive(true);
+                    GlobalVariables.isDPadEnabled = true; //Set to TRUE
+                }
+    }
+
+        public void DisableMainMenu()
+        {
+            MainMenuGUI.SetActive(false);
+        }
+
+
+        public void EnableMainMenu(){
+            MainMenuGUI.SetActive(true);
+
+                if (dpadUI != null){
+                dpadUI.SetActive(false);
+                }
+
+                Cursor.visible = true;
+                DisablePlayerControls();
+            }
+
+
 
     public void ImportModel()
     {
@@ -25,53 +77,6 @@ public class MainMenu : MonoBehaviour
         //Make the panel inactive pag tapos na iimport.
         DisableMainMenu();
         EnablePlayerControls();
-         if (dpadUI != null)
-        {
-            dpadUI.SetActive(true);
-        }
-         Cursor.visible = false;
-    }
-
-
-    //Ilagay to sa buttons or kung ano pang script
-    public void DisableMainMenu()
-    {
-        MainMenuGUI.SetActive(false);
-    }
-
-     public void EnableMainMenu(){
-           MainMenuGUI.SetActive(true);
-
-            if (dpadUI != null){
-             dpadUI.SetActive(false);
-            }
-
-            Cursor.visible = true; // Show cursor when main menu is active.
-            DisablePlayerControls();
-        }
-
-     private void DisablePlayerControls()
-    {
-        //Disable your camera and player movement here.
-        if (playerMovements
-         != null)
-        {
-            playerMovements
-            .enabled = false;
-        }
-
-    }
-
-     private void EnablePlayerControls()
-    {
-        //Enable your camera and player movement here.
-        if (playerMovements
-         != null)
-        {
-            playerMovements
-            .enabled = true;
-        }
-
-
+          
     }
 }
