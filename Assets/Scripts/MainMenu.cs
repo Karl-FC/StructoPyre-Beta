@@ -3,6 +3,7 @@ using UnityEngine;
 public class MainMenu : MonoBehaviour
 {
     [SerializeField] private GameObject MainMenuGUI;
+    [SerializeField] private GameObject MainMenuBG;
     [SerializeField] private GameObject dpadUI;
     [SerializeField] private MonoBehaviour playerMovements;
 
@@ -11,6 +12,7 @@ public class MainMenu : MonoBehaviour
     {
 // Initial setup
         MainMenuGUI.SetActive(true);
+        MainMenuBG.SetActive(true);
                 if (dpadUI != null)
                 {
                     dpadUI.SetActive(GlobalVariables.isDPadEnabled); // initially FALSE
@@ -55,11 +57,13 @@ public class MainMenu : MonoBehaviour
         public void DisableMainMenu()
         {
             MainMenuGUI.SetActive(false);
+            MainMenuBG.SetActive(false);
         }
 
 
         public void EnableMainMenu(){
             MainMenuGUI.SetActive(true);
+            MainMenuBG.SetActive(true);
 
                 if (dpadUI != null){
                 dpadUI.SetActive(false);
@@ -77,6 +81,10 @@ public class MainMenu : MonoBehaviour
         //Make the panel inactive pag tapos na iimport.
         DisableMainMenu();
         EnablePlayerControls();
-          
+          /*if (dpadUI != null)
+                {
+                    dpadUI.SetActive(true);
+                    GlobalVariables.isDPadEnabled = true; //Set to TRUE
+                }*/
     }
 }
