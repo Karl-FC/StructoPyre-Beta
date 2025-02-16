@@ -16,6 +16,7 @@ private void Awake()
             Debug.LogWarning("DPad UI reference is missing!");
             
         inputActions = new ControlThings();
+        inputActions.UI.Click.Enable();
     }
 private void OnEnable()
     {
@@ -29,39 +30,55 @@ private void OnEnable()
 
 
 //INPUTSSSSSSSSSSSSSSSS
- private void SetVerticalInput(float value)
+ private void SetForwardInput(float value) // Changed from SetVerticalInput
     {
-        dPadInput.y = value;
-        Debug.Log($"Vertical input: {value}");
+        dPadInput.y = value; // This will be used as Z in CameraMovement
+        Debug.Log($"Forward/Back input: {value}");
     }
 
     private void SetHorizontalInput(float value)
     {
         dPadInput.x = value;
-        Debug.Log($"Horizontal input: {value}");
+        Debug.Log($"Left/Right input: {value}");
     }
 
     // Input System methods
     public void OnDPadUpPressed(InputAction.CallbackContext context)
     {
-        if (context.performed) SetVerticalInput(1);
-        if (context.canceled) SetVerticalInput(0);
+        if (context.performed) SetForwardInput(1); // Forward
+        if (context.canceled) SetForwardInput(0);
     }
 
     public void OnDPadDownPressed(InputAction.CallbackContext context)
     {
-        if (context.performed) SetVerticalInput(-1);
-        if (context.canceled) SetVerticalInput(0);
+        if (context.performed) SetForwardInput(-1); // Back
+        if (context.canceled) SetForwardInput(0);
     }
 
-    // UI Button methods
-    public void OnUpButtonClick() => SetVerticalInput(1);
-    public void OnUpButtonRelease() => SetVerticalInput(0);
-    public void OnDownButtonClick() => SetVerticalInput(-1);
-    public void OnDownButtonRelease() => SetVerticalInput(0);
+    public void OnDPadLeftPressed(InputAction.CallbackContext context)
+    {
+        if (context.performed) SetHorizontalInput(-1); // Left
+        if (context.canceled) SetHorizontalInput(0);
+    }
+
+    public void OnDPadRightPressed(InputAction.CallbackContext context)
+    {
+        if (context.performed) SetHorizontalInput(1); // Right
+        if (context.canceled) SetHorizontalInput(0);
+    }
+
+    // UI Button methods for mouse/touch
+    public void OnUpButtonClick() => SetForwardInput(1);    // Forward
+    public void OnUpButtonRelease() => SetForwardInput(0);
+    public void OnDownButtonClick() => SetForwardInput(-1); // Back
+    public void OnDownButtonRelease() => SetForwardInput(0);
+    public void OnLeftButtonClick() => SetHorizontalInput(-1);  // Left
+    public void OnLeftButtonRelease() => SetHorizontalInput(0);
+    public void OnRightButtonClick() => SetHorizontalInput(1);  // Right
+    public void OnRightButtonRelease() => SetHorizontalInput(0);
 
     public Vector2 GetDPadInput()
     {
-        return dPadInput;
+        return dPadInput; // x = left/right, y = forward/back
     }
 }
