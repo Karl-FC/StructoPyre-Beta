@@ -820,6 +820,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ActivateCursor",
+                    "type": "Button",
+                    "id": "46b0efeb-4553-472a-873f-d8489f08bbaa",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -827,17 +836,6 @@
                     "name": "",
                     "id": "8d83c5ce-cb74-4130-879a-5fe16ba59eda",
                     "path": "<Keyboard>/leftArrow",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "GoLeft",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "bd5e6598-d452-45f8-8e2a-4735fef16b04",
-                    "path": "<Touchscreen>/primaryTouch/tap",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -858,30 +856,8 @@
                 },
                 {
                     "name": "",
-                    "id": "d2bba438-251b-4e91-a29c-23e1552301bd",
-                    "path": "<Touchscreen>/primaryTouch/tap",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "GoRight",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "e6f72f55-aeba-4c1d-a7aa-bd4a8f5d855f",
                     "path": "<Keyboard>/upArrow",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "GoUp",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "28af1156-ba9b-4783-923f-b2bc98303329",
-                    "path": "<Touchscreen>/primaryTouch/tap",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -902,19 +878,8 @@
                 },
                 {
                     "name": "",
-                    "id": "4856cdcb-f481-4ac5-a35f-56ead03b4b45",
-                    "path": "<Touchscreen>/primaryTouch/tap",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "GoDown",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "bd7f5ee5-4ad0-4d61-93bd-9aafc687ef09",
-                    "path": "<Touchscreen>/primaryTouch/tap",
+                    "id": "62b0a650-7651-4def-ba2b-917f958ce5e5",
+                    "path": "<Keyboard>/#(X)",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -924,12 +889,12 @@
                 },
                 {
                     "name": "",
-                    "id": "62b0a650-7651-4def-ba2b-917f958ce5e5",
+                    "id": "83e5d266-66d5-487f-a4e4-828085359d95",
                     "path": "<Keyboard>/#(C)",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Spawn",
+                    "action": "ActivateCursor",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

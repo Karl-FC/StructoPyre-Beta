@@ -842,6 +842,15 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ActivateCursor"",
+                    ""type"": ""Button"",
+                    ""id"": ""46b0efeb-4553-472a-873f-d8489f08bbaa"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -849,17 +858,6 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
                     ""name"": """",
                     ""id"": ""8d83c5ce-cb74-4130-879a-5fe16ba59eda"",
                     ""path"": ""<Keyboard>/leftArrow"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""GoLeft"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""bd5e6598-d452-45f8-8e2a-4735fef16b04"",
-                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -880,30 +878,8 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""d2bba438-251b-4e91-a29c-23e1552301bd"",
-                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""GoRight"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
                     ""id"": ""e6f72f55-aeba-4c1d-a7aa-bd4a8f5d855f"",
                     ""path"": ""<Keyboard>/upArrow"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""GoUp"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""28af1156-ba9b-4783-923f-b2bc98303329"",
-                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -924,19 +900,8 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""4856cdcb-f481-4ac5-a35f-56ead03b4b45"",
-                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""GoDown"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""bd7f5ee5-4ad0-4d61-93bd-9aafc687ef09"",
-                    ""path"": ""<Touchscreen>/primaryTouch/tap"",
+                    ""id"": ""62b0a650-7651-4def-ba2b-917f958ce5e5"",
+                    ""path"": ""<Keyboard>/#(X)"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -946,12 +911,12 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""62b0a650-7651-4def-ba2b-917f958ce5e5"",
+                    ""id"": ""83e5d266-66d5-487f-a4e4-828085359d95"",
                     ""path"": ""<Keyboard>/#(C)"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Spawn"",
+                    ""action"": ""ActivateCursor"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1045,6 +1010,7 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
         m_CrossPlatform_GoUp = m_CrossPlatform.FindAction("GoUp", throwIfNotFound: true);
         m_CrossPlatform_GoDown = m_CrossPlatform.FindAction("GoDown", throwIfNotFound: true);
         m_CrossPlatform_Spawn = m_CrossPlatform.FindAction("Spawn", throwIfNotFound: true);
+        m_CrossPlatform_ActivateCursor = m_CrossPlatform.FindAction("ActivateCursor", throwIfNotFound: true);
     }
 
     ~@ControlThings()
@@ -1298,6 +1264,7 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
     private readonly InputAction m_CrossPlatform_GoUp;
     private readonly InputAction m_CrossPlatform_GoDown;
     private readonly InputAction m_CrossPlatform_Spawn;
+    private readonly InputAction m_CrossPlatform_ActivateCursor;
     public struct CrossPlatformActions
     {
         private @ControlThings m_Wrapper;
@@ -1307,6 +1274,7 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
         public InputAction @GoUp => m_Wrapper.m_CrossPlatform_GoUp;
         public InputAction @GoDown => m_Wrapper.m_CrossPlatform_GoDown;
         public InputAction @Spawn => m_Wrapper.m_CrossPlatform_Spawn;
+        public InputAction @ActivateCursor => m_Wrapper.m_CrossPlatform_ActivateCursor;
         public InputActionMap Get() { return m_Wrapper.m_CrossPlatform; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1331,6 +1299,9 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
             @Spawn.started += instance.OnSpawn;
             @Spawn.performed += instance.OnSpawn;
             @Spawn.canceled += instance.OnSpawn;
+            @ActivateCursor.started += instance.OnActivateCursor;
+            @ActivateCursor.performed += instance.OnActivateCursor;
+            @ActivateCursor.canceled += instance.OnActivateCursor;
         }
 
         private void UnregisterCallbacks(ICrossPlatformActions instance)
@@ -1350,6 +1321,9 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
             @Spawn.started -= instance.OnSpawn;
             @Spawn.performed -= instance.OnSpawn;
             @Spawn.canceled -= instance.OnSpawn;
+            @ActivateCursor.started -= instance.OnActivateCursor;
+            @ActivateCursor.performed -= instance.OnActivateCursor;
+            @ActivateCursor.canceled -= instance.OnActivateCursor;
         }
 
         public void RemoveCallbacks(ICrossPlatformActions instance)
@@ -1438,5 +1412,6 @@ public partial class @ControlThings: IInputActionCollection2, IDisposable
         void OnGoUp(InputAction.CallbackContext context);
         void OnGoDown(InputAction.CallbackContext context);
         void OnSpawn(InputAction.CallbackContext context);
+        void OnActivateCursor(InputAction.CallbackContext context);
     }
 }

@@ -1782,6 +1782,7 @@ GameObject:
   - component: {fileID: 1605988836}
   - component: {fileID: 1605988842}
   - component: {fileID: 1605988843}
+  - component: {fileID: 1605988844}
   m_Layer: 0
   m_Name: PLAYER
   m_TagString: Player
@@ -1943,6 +1944,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   prefabToSpawn: {fileID: 357698400}
+--- !u!114 &1605988844
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1605988835}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 04fe4826a1d0e174487cf8ed7849d2e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerMovements: {fileID: 1605988836}
 --- !u!1 &1702424669
 GameObject:
   m_ObjectHideFlags: 0
@@ -2613,6 +2627,7 @@ MonoBehaviour:
   UIDpad: {fileID: 1702424669}
   playerMovements: {fileID: 1605988836}
   headerHeight: 0
+  headerOpacity: 0
 --- !u!1 &2144659685
 GameObject:
   m_ObjectHideFlags: 0
