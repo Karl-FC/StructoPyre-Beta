@@ -11,6 +11,7 @@ public class MainMenu : MonoBehaviour
     private RectTransform rectTransHeader;
 
     public float headerHeight;
+    public float headerOpacity;
 
 
 
@@ -80,11 +81,11 @@ private void CheckingMuna()
             MainMenuBG.SetActive(false);            
         }
 
-        public void HeaderAdjust(float height, float opacity)
+        public void HeaderAdjust()
         {
             rectTransHeader = UIHeader.GetComponent<RectTransform>();
-            rectTransHeader.sizeDelta = new Vector2(rectTransHeader.sizeDelta.x, height);
-            UIHeader.GetComponent<CanvasGroup>().alpha = opacity;
+            rectTransHeader.sizeDelta = new Vector2(rectTransHeader.sizeDelta.x, headerHeight);
+            UIHeader.GetComponent<CanvasGroup>().alpha = headerOpacity;
             
         }
 
