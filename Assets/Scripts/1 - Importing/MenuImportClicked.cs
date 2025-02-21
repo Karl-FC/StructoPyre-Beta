@@ -8,10 +8,12 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private GameObject UIDpad;
     [SerializeField] private MonoBehaviour playerMovements;
 
+    [SerializeField] private ToggleMouseCursor ToggleMouseScript;
+
     private RectTransform rectTransHeader;
 
-    public float headerHeight;
-    public float headerOpacity;
+    [SerializeField] private float headerHeight = 36f;
+    [SerializeField] private float headerOpacity = 0.75f;
 
 
 
@@ -58,9 +60,14 @@ private void CheckingMuna()
 
 
      private void DisablePlayerControls() //Disable controls
-    {   
+    {   //Disable movement controls
         playerMovements.enabled = false;
+        //Pang variable kasi trip ko
         GlobalVariables.playerCanMove = false;
+        GlobalVariables.isMouseVisible = true;
+        //Enable Mouse
+        ToggleMouseScript.ToggleCursorFunc(true);
+            //GlobalVariables.isDPadEnabled = false;
     }
 
      private void EnablePlayerControls()
@@ -69,7 +76,9 @@ private void CheckingMuna()
             playerMovements.enabled = true;
             GlobalVariables.playerCanMove = true;  
         //Disable Mouse
-                Cursor.visible = GlobalVariables.isMouseVisible;
+                ToggleMouseScript.ToggleCursorFunc(false);
+                GlobalVariables.playerCanMove = true;
+                GlobalVariables.isMouseVisible = false;
         //Enable DPad
                     UIDpad.SetActive(true);
                     GlobalVariables.isDPadEnabled = true; //Set to TRUE
@@ -78,7 +87,8 @@ private void CheckingMuna()
         public void DisableMainMenu()
         {
             MainMenuGUI.SetActive(false);
-            MainMenuBG.SetActive(false);            
+            MainMenuBG.SetActive(false);
+            HeaderAdjust();            
         }
 
         public void HeaderAdjust()

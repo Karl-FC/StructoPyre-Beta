@@ -34,7 +34,7 @@ private void ToggleMouse(InputAction.CallbackContext context)
         ToggleCursorFunc(!Cursor.visible);
     }
 
-    private void ToggleCursorFunc(bool mayMouseba)
+    public void ToggleCursorFunc(bool mayMouseba)
     {
             Cursor.visible = mayMouseba;
             Cursor.lockState = mayMouseba ? CursorLockMode.None : CursorLockMode.Locked;
