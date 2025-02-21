@@ -1,7 +1,19 @@
 using UnityEngine;
+using System.Collections;
+using Dummiesman;
+using System.IO;
+using SFB;
+using UnityEngine.Networking;
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+    [System.Runtime.InteropServices.DllImport("__Internal")]
+    //Removed PRIVATE as it is not needed and can cause errors
+    public static extern void UploadFile(string gameObjectName, string methodName, string filter, bool multiple);
+#endif
 
 public class MainMenu : MonoBehaviour
 {
+    //GUI THINGZ
     [SerializeField] private GameObject MainMenuGUI;
     [SerializeField] private GameObject MainMenuBG;
     [SerializeField] private GameObject UIHeader;
@@ -15,12 +27,18 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private float headerHeight = 36f;
     [SerializeField] private float headerOpacity = 0.75f;
 
+    //IMPORT NAAAAA
+    [SerializeField] private Transform modelSpawnPoint;
+    private GameObject loadedObject;
 
 
 
 // Visible muna yun background, buttons at cursor. Yun DPad hindi pa
 private void Awake()
 {
+    // Ensure this GameObject is active
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
 
     MainMenuGUI.SetActive(true);
     MainMenuBG.SetActive(true);
@@ -88,7 +106,7 @@ private void CheckingMuna()
         {
             MainMenuGUI.SetActive(false);
             MainMenuBG.SetActive(false);
-            HeaderAdjust();            
+            HeaderAdjust();
         }
 
         public void HeaderAdjust()
@@ -96,16 +114,95 @@ private void CheckingMuna()
             rectTransHeader = UIHeader.GetComponent<RectTransform>();
             rectTransHeader.sizeDelta = new Vector2(rectTransHeader.sizeDelta.x, headerHeight);
             UIHeader.GetComponent<CanvasGroup>().alpha = headerOpacity;
-            
+
         }
 
     public void ImportModel()
+{
+    if (!gameObject.activeSelf)
+        gameObject.SetActive(true);
+
+    #if UNITY_WEBGL && !UNITY_EDITOR
+        UploadFile(gameObject.name, "OnFileUpload", ".obj", false);
+    #else
+        var extensions = new [] {
+            new ExtensionFilter("3D Models", "obj"),
+            new ExtensionFilter("All Files", "*"),
+        };
+        var paths = StandaloneFileBrowser.OpenFilePanel("Import 3D Model", "", extensions, false);
+        if (paths.Length > 0)
+        {
+            StartCoroutine(LoadModel(new System.Uri(paths[0]).AbsoluteUri));
+            DisableMainMenu();
+            EnablePlayerControls();
+        }
+    #endif
+    }
+
+    // Called from browser in WebGL
+    public void OnFileUpload(string url)
     {
-        //Import Script here...
-        //Make the panel inactive pag tapos na iimport.
+        StartCoroutine(LoadModel(url));
+    }
+
+    private IEnumerator LoadModel(string url)
+{
+    Debug.Log($"Starting to load model from: {url}");
+    using (UnityWebRequest www = UnityWebRequest.Get(url))
+    {
+        Debug.Log("Sending web request...");
+        yield return www.SendWebRequest();
+
+        if (www.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError($"Error loading model: {www.error}");
+            yield break;
+        }
+
+        try
+        {
+            Debug.Log($"Downloaded data size: {www.downloadHandler.data.Length} bytes");
+            var textStream = new MemoryStream(www.downloadHandler.data);
+
+            if (loadedObject != null)
+            {
+                Debug.Log("Destroying previous model");
+                Destroy(loadedObject);
+            }
+
+            Debug.Log("Creating OBJLoader...");
+            var loader = new OBJLoader();
+            Debug.Log("Loading model from stream...");
+            loadedObject = loader.Load(textStream);
+
+            if (loadedObject != null)
+{
+    Debug.Log($"Model loaded: {loadedObject.name}");
+    if (modelSpawnPoint != null)
+    {
+        loadedObject.transform.position = modelSpawnPoint.position;
+        Debug.Log($"Model positioned at: {modelSpawnPoint.position}");
+        // Only disable UI and enable controls after successful load
         DisableMainMenu();
         EnablePlayerControls();
-                   /*UIDpad.SetActive(true);
-                        GlobalVariables.isDPadEnabled = true; //Set to TRUE*/
     }
+    else
+    {
+        Debug.LogWarning("modelSpawnPoint is null!");
+    }
+}
+            else
+            {
+                Debug.LogError("LoadedObject is null after loading!");
+            }
+
+            DisableMainMenu();
+            EnablePlayerControls();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Error parsing model huhu: {e.Message}\nStack trace: {e.StackTrace}");
+        }
+    }
+}
 }
