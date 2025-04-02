@@ -62,7 +62,7 @@ public class OpenFile : MonoBehaviour
     }
 #endif
 
-    private IEnumerator OutputRoutineOpen(string url)
+        private IEnumerator OutputRoutineOpen(string url)
     {
         UnityWebRequest www = UnityWebRequest.Get(url);
         yield return www.SendWebRequest();
@@ -73,7 +73,6 @@ public class OpenFile : MonoBehaviour
         else
         {
             Debug.Log(www.downloadHandler.text);
-            //textMeshPro.text = www.downloadHandler.text;
 
             //Load OBJ Model
             MemoryStream textStream = new MemoryStream(Encoding.UTF8.GetBytes(www.downloadHandler.text));
@@ -82,9 +81,18 @@ public class OpenFile : MonoBehaviour
                 Destroy(model);
             }
             model = new OBJLoader().Load(textStream);
-            model.transform.localScale = new Vector3(-1, 1, 1); // set the position of parent model. Reverse X to show properly 
-            FitOnScreen();
+            
+            // Place the model at the origin
+            model.transform.position = Vector3.zero;
+            
+            // Apply the scale, keeping the X-flipping
+            model.transform.localScale = new Vector3(-1, 1, 1);
+            
+            // Apply double-sided faces without changing camera position
             DoublicateFaces();
+            
+            // Store imported model in global variables
+            GlobalVariables.ImportedModel = model;
 
             // After model is fully prepared, invoke the event
             if (OnModelLoaded != null)
@@ -105,16 +113,15 @@ public class OpenFile : MonoBehaviour
         return bound;
     }
 
-    public void FitOnScreen()
+        public void FitOnScreen()
     {
+        // Only calculate the model bounds but don't move the camera
         Bounds bound = GetBound(model);
-        Vector3 boundSize = bound.size;
-        float diagonal = Mathf.Sqrt((boundSize.x * boundSize.x) + (boundSize.y * boundSize.y) + (boundSize.z * boundSize.z)); //Get box diagonal
-        Camera.main.orthographicSize = diagonal / 2.0f;
-        Camera.main.transform.position = bound.center;
+        Debug.Log($"Model loaded with bounds: Size: {bound.size}, Center: {bound.center}");
+        
+        // Optionally, you can store this information for debugging
+        GlobalVariables.ModelSize = bound.size;
     }
-
-
 
     // Doublicate the size of mesh components, in which the second half of the tringles winding order and normals are reverse of the first half to enable displaying front and back faces
     //https://answers.unity.com/questions/280741/how-make-visible-the-back-face-of-a-mesh.html
