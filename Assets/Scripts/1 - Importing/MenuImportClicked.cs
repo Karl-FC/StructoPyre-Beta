@@ -89,7 +89,7 @@ public class MainMenu : MonoBehaviour
         GlobalVariables.playerCanMove = false;
         GlobalVariables.isMouseVisible = true;
         //Enable Mouse
-        ToggleMouseScript.ToggleCursorFunc(true);
+        ToggleMouseScript.SetMouseVisible(true);
         //GlobalVariables.isDPadEnabled = false;
     }
 
@@ -99,8 +99,8 @@ public class MainMenu : MonoBehaviour
         UIDpad.SetActive(true);
         GlobalVariables.isDPadEnabled = true;
         
-        // Then hide the cursor and enable movement sa ToggleCursorFunc
-        ToggleMouseScript.ToggleCursorFunc(false);
+        // Then hide the cursor and enable movement sa SetMouseVisible
+        ToggleMouseScript.SetMouseVisible(false);
         
         // Double-check the movement component is enabled
         if (!playerMovements.enabled)

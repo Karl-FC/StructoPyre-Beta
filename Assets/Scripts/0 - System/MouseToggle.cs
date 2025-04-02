@@ -10,7 +10,7 @@ public class ToggleMouseCursor : MonoBehaviour
     private void Awake()
     {
         inputActions = new ControlThings();
-        ToggleCursorFunc(true);
+        SetMouseVisible(true);
     }
 
     private void OnEnable()
@@ -31,10 +31,10 @@ public class ToggleMouseCursor : MonoBehaviour
 
     private void ToggleMouse(InputAction.CallbackContext context)
     {
-        ToggleCursorFunc(!Cursor.visible);
+        SetMouseVisible(!Cursor.visible);
     }
 
-    public void ToggleCursorFunc(bool showCursor)
+    public void SetMouseVisible(bool showCursor)
     {
         Cursor.visible = showCursor;
         Cursor.lockState = showCursor ? CursorLockMode.None : CursorLockMode.Locked;
@@ -51,7 +51,7 @@ public class ToggleMouseCursor : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("playerMovements reference is null in ToggleCursorFunc");
+            Debug.LogWarning("playerMovements reference is null in SetMouseVisible");
         }
         
         Debug.Log($"Cursor is now {(showCursor ? "visible" : "hidden")}, PlayerCanMove={GlobalVariables.playerCanMove}");
