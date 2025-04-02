@@ -33,6 +33,9 @@ public class OpenFile : MonoBehaviour
     public TextMeshProUGUI textMeshPro;
     public GameObject model; //Load OBJ Model
 
+    public delegate void ModelLoadedHandler(GameObject loadedModel);
+    public event ModelLoadedHandler OnModelLoaded;
+
 #if UNITY_WEBGL && !UNITY_EDITOR
     // WebGL
     [DllImport("__Internal")]
@@ -51,6 +54,12 @@ public class OpenFile : MonoBehaviour
     // Standalone platforms & editor
     public void OnClickOpen()
     {
+        // Make sure this GameObject is active
+        if (!gameObject.activeInHierarchy)
+        {
+            gameObject.SetActive(true);
+        }
+        
         string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", "obj", false);
         if (paths.Length > 0)
         {
@@ -81,6 +90,12 @@ public class OpenFile : MonoBehaviour
             model.transform.localScale = new Vector3(-1, 1, 1); // set the position of parent model. Reverse X to show properly 
             FitOnScreen();
             DoublicateFaces();
+
+            // After model is loaded and processed
+            if (OnModelLoaded != null)
+            {
+                OnModelLoaded(model);
+            }
         }
     }
 

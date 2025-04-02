@@ -16,8 +16,6 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private float headerOpacity = 0.75f;
 
 
-
-
 // Visible muna yun background, buttons at cursor. Yun DPad hindi pa
 private void Awake()
 {
@@ -32,6 +30,20 @@ private void Awake()
     DisablePlayerControls();
 }
 
+void Start()
+{
+    OpenFile fileOpener = FindObjectOfType<OpenFile>();
+    if (fileOpener != null)
+    {
+        fileOpener.OnModelLoaded += OnModelImported;
+    }
+}
+
+void OnModelImported(GameObject model)
+{
+    // Now we can safely enable player controls
+    EnablePlayerControls();
+}
 
 //Ilagay to sa buttons or kung ano pang script
 //STEP -1: Checking
@@ -101,11 +113,22 @@ private void CheckingMuna()
 
     public void ImportModel()
     {
-        //Import Script here...
-        //Make the panel inactive pag tapos na iimport.
+        // Get reference to the OpenFile script
+        OpenFile fileOpener = FindObjectOfType<OpenFile>();
+        
+        // Make sure the GameObject with OpenFile script is active
+        if (fileOpener != null && !fileOpener.gameObject.activeInHierarchy)
+        {
+            fileOpener.gameObject.SetActive(true);
+        }
+        
+        // Trigger file selection
+        if (fileOpener != null)
+        {
+            fileOpener.OnClickOpen();
+        }
+        
+        // Hide menu after import is initiated
         DisableMainMenu();
-        // EnablePlayerControls();
-                   /*UIDpad.SetActive(true);
-                        GlobalVariables.isDPadEnabled = true; //Set to TRUE*/
     }
 }
