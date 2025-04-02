@@ -104,7 +104,7 @@ private void CheckingMuna()
         //Import Script here...
         //Make the panel inactive pag tapos na iimport.
         DisableMainMenu();
-        EnablePlayerControls();
+        // EnablePlayerControls();
                    /*UIDpad.SetActive(true);
                         GlobalVariables.isDPadEnabled = true; //Set to TRUE*/
     }
