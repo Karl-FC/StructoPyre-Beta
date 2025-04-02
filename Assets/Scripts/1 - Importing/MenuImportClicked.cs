@@ -41,6 +41,7 @@ public class MainMenu : MonoBehaviour
     // Method to handle model import completion
     private void OnModelImported(GameObject loadedModel)
     {
+        Debug.Log("Model imported SUMAKSES: " + loadedModel.name);
         // Enable player controls now that the model is ready
         EnablePlayerControls();
     }
@@ -94,16 +95,24 @@ public class MainMenu : MonoBehaviour
 
     private void EnablePlayerControls()
     {
-        //Enable controls
-        playerMovements.enabled = true;
-        GlobalVariables.playerCanMove = true;
-        //Disable Mouse
-        ToggleMouseScript.ToggleCursorFunc(false);
-        GlobalVariables.playerCanMove = true;
-        GlobalVariables.isMouseVisible = false;
-        //Enable DPad
+        // 1) enable the DPad UI. DAPAT nakaactivate
         UIDpad.SetActive(true);
-        GlobalVariables.isDPadEnabled = true; //Set to TRUE
+        GlobalVariables.isDPadEnabled = true;
+        
+        // Then hide the cursor and enable movement sa ToggleCursorFunc
+        ToggleMouseScript.ToggleCursorFunc(false);
+        
+        // Double-check the movement component is enabled
+        if (!playerMovements.enabled)
+        {
+            playerMovements.enabled = true;
+            Debug.Log("Forced enable of player movement component");
+        }
+        
+        // Add logging for debugging
+        Debug.Log("Player controls enabled: Movement=" + playerMovements.enabled + 
+                  ", CanMove=" + GlobalVariables.playerCanMove + 
+                  ", MouseVisible=" + GlobalVariables.isMouseVisible);
     }
 
     public void DisableMainMenu()

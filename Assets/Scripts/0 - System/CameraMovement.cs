@@ -28,12 +28,20 @@ public class CameraMovement : MonoBehaviour
 
     private void OnEnable()
     {
-        inputActions.Enable();
+        if (inputActions != null)
+        {
+            inputActions.Player.Enable();
+            Debug.Log("Player input actions enabled");
+        }
     }
 
     private void OnDisable()
     {
-        inputActions.Disable();
+        if (inputActions != null)
+        {
+            inputActions.Player.Disable();
+            Debug.Log("Player input actions disabled");
+        }
     }
 
     void Start () {
@@ -41,13 +49,22 @@ public class CameraMovement : MonoBehaviour
         rb = gameObject.GetComponent<Rigidbody>();
     }
 
-    void Update () {
-        Pagtingin();
+    void Update()
+    {
+        // Dapat makakagalaw muna si player bago mag look around
+        if (GlobalVariables.playerCanMove)
+        {
+            Pagtingin();
+        }
     }
 
     private void FixedUpdate()
     {
-        MoveitMoveit();
+        // Only process movement if player can move
+        if (GlobalVariables.playerCanMove)
+        {
+            MoveitMoveit();
+        }
     }
 
     void Pagtingin() { //Camera looking function

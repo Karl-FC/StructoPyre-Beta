@@ -29,20 +29,31 @@ public class ToggleMouseCursor : MonoBehaviour
         }
     }
 
-private void ToggleMouse(InputAction.CallbackContext context)
+    private void ToggleMouse(InputAction.CallbackContext context)
     {
         ToggleCursorFunc(!Cursor.visible);
     }
 
-    public void ToggleCursorFunc(bool mayMouseba)
+    public void ToggleCursorFunc(bool showCursor)
     {
-            Cursor.visible = mayMouseba;
-            Cursor.lockState = mayMouseba ? CursorLockMode.None : CursorLockMode.Locked;
-            Debug.Log($"Cursor is now {mayMouseba}");
-            GlobalVariables.isMouseVisible = mayMouseba;
-           //Movement true 
-            playerMovements.enabled = !mayMouseba;
-            GlobalVariables.playerCanMove = !mayMouseba;
-
+        Cursor.visible = showCursor;
+        Cursor.lockState = showCursor ? CursorLockMode.None : CursorLockMode.Locked;
+        
+        // Update muna yun global variable
+        GlobalVariables.isMouseVisible = showCursor;
+        GlobalVariables.playerCanMove = !showCursor;
+        
+        // THEN apply movement state
+        if (playerMovements != null)
+        {
+            playerMovements.enabled = !showCursor;
+            Debug.Log($"Player movement is now {(!showCursor ? "enabled" : "disabled")}");
+        }
+        else
+        {
+            Debug.LogWarning("playerMovements reference is null in ToggleCursorFunc");
+        }
+        
+        Debug.Log($"Cursor is now {(showCursor ? "visible" : "hidden")}, PlayerCanMove={GlobalVariables.playerCanMove}");
     }
 }
