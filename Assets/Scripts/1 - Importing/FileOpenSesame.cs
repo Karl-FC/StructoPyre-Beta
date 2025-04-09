@@ -36,6 +36,17 @@ public class OpenFile : MonoBehaviour
     public delegate void ModelLoadedDelegate(GameObject loadedModel);
     public event ModelLoadedDelegate OnModelLoaded;
 
+    [Header("Model Scaling")]
+    [Tooltip("Enable to manually set scale factor instead of auto-detection")]
+    [SerializeField] private bool useManualScaling = false;
+    [Tooltip("Scale factor applied when manual scaling is enabled")]
+    [SerializeField] private float manualScaleFactor = 1.0f;
+    [Tooltip("Toggle to show scale debugging information")]
+    [SerializeField] private bool showScaleDebugging = true;
+
+    [Header("Unit Conversions")]
+    [SerializeField] private TMP_Dropdown unitDropdown;
+
 #if UNITY_WEBGL && !UNITY_EDITOR
     // WebGL
     [DllImport("__Internal")]
@@ -62,7 +73,16 @@ public class OpenFile : MonoBehaviour
     }
 #endif
 
-        private IEnumerator OutputRoutineOpen(string url)
+    private void Start()
+    {
+        // Set up the dropdown listener if it exists
+        if (unitDropdown != null)
+        {
+            unitDropdown.onValueChanged.AddListener(OnUnitTypeChanged);
+        }
+    }
+
+    private IEnumerator OutputRoutineOpen(string url)
     {
         UnityWebRequest www = UnityWebRequest.Get(url);
         yield return www.SendWebRequest();
@@ -85,10 +105,13 @@ public class OpenFile : MonoBehaviour
             // Place the model at the origin
             model.transform.position = Vector3.zero;
             
-            // Apply the scale, keeping the X-flipping
+            // First let's apply the X-flipping but keep scale neutral
             model.transform.localScale = new Vector3(-1, 1, 1);
             
-            // Apply double-sided faces without changing camera position
+            // Apply normalization to ensure proper scaling
+            NormalizeModelScale();
+            
+            // Apply double-sided faces
             DoublicateFaces();
             
             // Store imported model in global variables
@@ -99,6 +122,80 @@ public class OpenFile : MonoBehaviour
             {
                 OnModelLoaded(model);
             }
+        }
+    }
+
+    private void NormalizeModelScale()
+    {
+        // Get the model's bounds
+        Bounds bounds = GetBound(model);
+        
+        if (showScaleDebugging)
+        {
+            Debug.Log($"Original model size: {bounds.size}, Center: {bounds.center}");
+        }
+        
+        float scaleFactor = 1.0f;
+        
+        if (useManualScaling)
+        {
+            // Use the manual scale factor if enabled
+            scaleFactor = manualScaleFactor;
+            if (showScaleDebugging)
+            {
+                Debug.Log($"Using manual scale factor: {scaleFactor}");
+            }
+        }
+        else
+        {
+            // Auto-detect based on model size
+            float maxDimension = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
+            
+            // Intelligent scaling based on common SketchUp export scales
+            if (maxDimension > 100.0f)
+            {
+                // Likely inches to meters (1 inch = 0.0254m)
+                scaleFactor = 0.0254f;
+                Debug.Log("Model appears to be in inches, scaling to meters");
+            }
+            else if (maxDimension > 10.0f && maxDimension <= 100.0f)
+            {
+                // Likely centimeters to meters
+                scaleFactor = 0.01f;
+                Debug.Log("Model appears to be in centimeters, scaling to meters");
+            }
+            else if (maxDimension > 0.01f && maxDimension <= 0.1f)
+            {
+                // Likely very small - could be SketchUp in feet but exported small
+                scaleFactor = 10.0f; 
+                Debug.Log("Model appears to be very small, scaling up by 10x");
+            }
+            else if (maxDimension <= 0.01f)
+            {
+                // Extremely small, needs significant scaling
+                scaleFactor = 100.0f;
+                Debug.Log("Model appears to be extremely small, scaling up by 100x");
+            }
+            else
+            {
+                // Size seems reasonable for meters already
+                Debug.Log("Model appears to already be in meters, no scaling needed");
+            }
+        }
+        
+        // Apply the scale factor while preserving the X-flip
+        Vector3 currentScale = model.transform.localScale;
+        model.transform.localScale = new Vector3(
+            currentScale.x * scaleFactor,
+            currentScale.y * scaleFactor,
+            currentScale.z * scaleFactor
+        );
+        
+        // Log the adjusted size for reference
+        if (showScaleDebugging)
+        {
+            Bounds newBounds = GetBound(model);
+            Debug.Log($"Adjusted model size: {newBounds.size}, Scale: {model.transform.localScale}");
         }
     }
 
@@ -113,7 +210,7 @@ public class OpenFile : MonoBehaviour
         return bound;
     }
 
-        public void FitOnScreen()
+    public void FitOnScreen()
     {
         // Only calculate the model bounds but don't move the camera
         Bounds bound = GetBound(model);
@@ -175,4 +272,57 @@ public class OpenFile : MonoBehaviour
         }
     }
 
+    public void SetManualScaling(bool isManual)
+    {
+        useManualScaling = isManual;
+    }
+
+    public void SetManualScaleValue(float value)
+    {
+        manualScaleFactor = value;
+        
+        // If we already have a model loaded, apply the new scale immediately
+        if (model != null && useManualScaling)
+        {
+            // Reset to base flipped scale first
+            model.transform.localScale = new Vector3(-1, 1, 1);
+            // Then apply the new scale factor
+            NormalizeModelScale();
+        }
+    }
+
+    private void OnUnitTypeChanged(int index)
+    {
+        // If a model is loaded, apply the new scale immediately
+        if (model != null)
+        {
+            // Reset to base flipped scale first
+            model.transform.localScale = new Vector3(-1, 1, 1);
+            
+            // Apply the selected unit conversion
+            useManualScaling = (index != 0); // If not "autodetect", use manual scaling
+            
+            switch(index)
+            {
+                case 0: // Autodetect
+                    useManualScaling = false;
+                    break;
+                case 1: // Metric-millimeters
+                    manualScaleFactor = 0.001f; // 1mm = 0.001m in Unity
+                    break;
+                case 2: // Metric-meters
+                    manualScaleFactor = 1.0f;   // 1m = 1m in Unity
+                    break;
+                case 3: // Imperial-feet
+                    manualScaleFactor = 0.3048f; // 1ft = 0.3048m
+                    break;
+                case 4: // Imperial-inches
+                    manualScaleFactor = 0.0254f; // 1in = 0.0254m
+                    break;
+            }
+            
+            // Re-apply scaling
+            NormalizeModelScale();
+        }
+    }
 }
