@@ -35,7 +35,7 @@ namespace Dummiesman
         /// <summary>
         /// Determines how objects will be created
         /// </summary>
-        public SplitMode SplitMode = SplitMode.Object;
+        public SplitMode SplitMode = SplitMode.Material;
 
         //global lists, accessed by objobjectbuilder
         internal List<Vector3> Vertices = new List<Vector3>();
