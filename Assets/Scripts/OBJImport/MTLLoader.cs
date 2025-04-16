@@ -157,7 +157,7 @@ public class MTLLoader {
             {
                 string materialName = processedLine.Substring(7);
 
-                var newMtl = new Material(Shader.Find("Standard (Specular setup)")) { name = materialName };
+                var newMtl = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = materialName };
                 mtlDict[materialName] = newMtl;
                 currentMaterial = newMtl;
 
@@ -171,10 +171,20 @@ public class MTLLoader {
             //diffuse color
             if (splitLine[0] == "Kd" || splitLine[0] == "kd")
             {
-                var currentColor = currentMaterial.GetColor("_Color");
-                var kdColor = OBJLoaderHelper.ColorFromStrArray(splitLine);
+                // Read the alpha value from the potentially already set _BaseColor or _Color
+                // URP Lit uses _BaseColor, but let's be safe and check _Color too.
+                float currentAlpha = 1.0f;
+                if (currentMaterial.HasProperty("_BaseColor")) {
+                    currentAlpha = currentMaterial.GetColor("_BaseColor").a;
+                } else if (currentMaterial.HasProperty("_Color")) {
+                    currentAlpha = currentMaterial.GetColor("_Color").a;
+                }
+                
+                var kdColor = OBJLoaderHelper.ColorFromStrArray(splitLine); // Parse Kd value from MTL
 
-                currentMaterial.SetColor("_Color", new Color(kdColor.r, kdColor.g, kdColor.b, currentColor.a));
+                // Set the URP shader's base color property
+                currentMaterial.SetColor("_BaseColor", new Color(kdColor.r, kdColor.g, kdColor.b, currentAlpha));
+                Debug.Log($"MTLLoader: Set _BaseColor for {currentMaterial.name} to {kdColor} with alpha {currentAlpha}");
                 continue;
             }
 
@@ -265,12 +275,18 @@ public class MTLLoader {
 
                 if(visibility < (1f - Mathf.Epsilon))
                 {
-                    var currentColor = currentMaterial.GetColor("_Color");
+                    // Apply alpha to the _BaseColor property for URP
+                    if (currentMaterial.HasProperty("_BaseColor")) {
+                        var baseColor = currentMaterial.GetColor("_BaseColor");
+                        baseColor.a = visibility;
+                        currentMaterial.SetColor("_BaseColor", baseColor);
+                        Debug.Log($"MTLLoader: Updated _BaseColor alpha for {currentMaterial.name} to {visibility}");
 
-                    currentColor.a = visibility;
-                    currentMaterial.SetColor("_Color", currentColor);
-
-                    OBJLoaderHelper.EnableMaterialTransparency(currentMaterial);
+                        // Ensure material is set to transparent for URP
+                        OBJLoaderHelper.EnableMaterialTransparency(currentMaterial); // Assuming this helper works for URP or is adapted
+                    } else {
+                        Debug.LogWarning($"MTLLoader: Tried to set alpha on material {currentMaterial.name}, but it lacks _BaseColor property.");
+                    }
                 }
                 continue;
             }

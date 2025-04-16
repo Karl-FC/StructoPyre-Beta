@@ -53,7 +53,7 @@ public class OpenFile : MonoBehaviour
     private static extern void UploadFile(string gameObjectName, string methodName, string filter, bool multiple);
 
     public void OnClickOpen() {
-        UploadFile(gameObject.name, "OnFileUpload", ".obj", false);
+        UploadFile(gameObject.name, "OnFileUpload", ".obj,.mtl", false);
     }
 
     // Called from browser
@@ -62,10 +62,10 @@ public class OpenFile : MonoBehaviour
     }
 #else
 
-    // Standalone platforms & editor
+    // Standalone platforms & editor    s
     public void OnClickOpen()
     {
-        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", "obj", false);
+        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", new[] { new ExtensionFilter("3D Model Files", "obj", "mtl") }, false);
         if (paths.Length > 0)
         {
             StartCoroutine(OutputRoutineOpen(new System.Uri(paths[0]).AbsoluteUri));
@@ -84,44 +84,74 @@ public class OpenFile : MonoBehaviour
 
     private IEnumerator OutputRoutineOpen(string url)
     {
-        UnityWebRequest www = UnityWebRequest.Get(url);
+        // Get the directory path of the OBJ file
+        string objPath = url;
+        string directoryPath = Path.GetDirectoryName(objPath);
+        string fileName = Path.GetFileNameWithoutExtension(objPath);
+        string mtlPath = Path.Combine(directoryPath, fileName + ".mtl");
+
+        // Load the OBJ file
+        UnityWebRequest www = UnityWebRequest.Get(objPath);
         yield return www.SendWebRequest();
         if (www.result != UnityWebRequest.Result.Success)
         {
             Debug.Log("WWW ERROR: " + www.error);
+            yield break;
+        }
+
+        // Load the MTL file if it exists
+        UnityWebRequest mtlRequest = UnityWebRequest.Get(mtlPath);
+        yield return mtlRequest.SendWebRequest();
+        
+        // Create memory streams for both files
+        MemoryStream objStream = new MemoryStream(Encoding.UTF8.GetBytes(www.downloadHandler.text));
+        MemoryStream mtlStream = null;
+        
+        if (mtlRequest.result == UnityWebRequest.Result.Success)
+        {
+            mtlStream = new MemoryStream(Encoding.UTF8.GetBytes(mtlRequest.downloadHandler.text));
+            Debug.Log("Successfully loaded MTL file");
         }
         else
         {
-            Debug.Log(www.downloadHandler.text);
+            Debug.Log("No MTL file found or error loading MTL file");
+        }
 
-            //Load OBJ Model
-            MemoryStream textStream = new MemoryStream(Encoding.UTF8.GetBytes(www.downloadHandler.text));
-            if (model != null)
-            {
-                Destroy(model);
-            }
-            model = new OBJLoader().Load(textStream);
-            
-            // Place the model at the origin
-            model.transform.position = Vector3.zero;
-            
-            // First let's apply the X-flipping but keep scale neutral
-            model.transform.localScale = new Vector3(-1, 1, 1);
-            
-            // Apply normalization to ensure proper scaling
-            NormalizeModelScale();
-            
-            // Apply double-sided faces
-            DoublicateFaces();
-            
-            // Store imported model in global variables
-            GlobalVariables.ImportedModel = model;
+        // Load the model with materials
+        if (model != null)
+        {
+            Destroy(model);
+        }
 
-            // After model is fully prepared, invoke the event
-            if (OnModelLoaded != null)
-            {
-                OnModelLoaded(model);
-            }
+        OBJLoader loader = new OBJLoader();
+        if (mtlStream != null)
+        {
+            model = loader.Load(objStream, mtlStream);
+        }
+        else
+        {
+            model = loader.Load(objStream);
+        }
+        
+        // Place the model at the origin
+        model.transform.position = Vector3.zero;
+        
+        // First let's apply the X-flipping but keep scale neutral
+        model.transform.localScale = new Vector3(-1, 1, 1);
+        
+        // Apply normalization to ensure proper scaling
+        NormalizeModelScale();
+        
+        // Apply double-sided faces
+        DoublicateFaces();
+        
+        // Store imported model in global variables
+        GlobalVariables.ImportedModel = model;
+
+        // After model is fully prepared, invoke the event
+        if (OnModelLoaded != null)
+        {
+            OnModelLoaded(model);
         }
     }
 

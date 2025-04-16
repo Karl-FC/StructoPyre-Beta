@@ -3830,7 +3830,7 @@ MonoBehaviour:
   useManualScaling: 0
   manualScaleFactor: 1
   showScaleDebugging: 1
-  unitDropdown: {fileID: 0}
+  unitDropdown: {fileID: 422052294}
 --- !u!4 &2041368318
 Transform:
   m_ObjectHideFlags: 0
