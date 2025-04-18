@@ -27,7 +27,9 @@ using SFB;
 using TMPro;
 using UnityEngine.Networking;
 using Dummiesman; //Load OBJ Model
+using System; // Needed for Action
 
+// Main class for opening and processing OBJ files
 public class OpenFile : MonoBehaviour
 {
     public TextMeshProUGUI textMeshPro;
@@ -46,6 +48,8 @@ public class OpenFile : MonoBehaviour
 
     [Header("Unit Conversions")]
     [SerializeField] private TMP_Dropdown unitDropdown;
+
+    public RealMaterialMapperUI materialMapperUI; // <--- ADD THIS LINE
 
 #if UNITY_WEBGL && !UNITY_EDITOR
     // WebGL
@@ -133,6 +137,8 @@ public class OpenFile : MonoBehaviour
             model = loader.Load(objStream);
         }
         
+        if (model == null) yield break; // Exit if model loading failed
+        
         // Place the model at the origin
         model.transform.position = Vector3.zero;
         
@@ -148,11 +154,59 @@ public class OpenFile : MonoBehaviour
         // Store imported model in global variables
         GlobalVariables.ImportedModel = model;
 
-        // After model is fully prepared, invoke the event
-        if (OnModelLoaded != null)
+        // --- START MATERIAL MAPPING ---
+        if (materialMapperUI != null)
         {
-            OnModelLoaded(model);
+            List<string> materialNames = new List<string>();
+            if (model != null)
+            {
+                // Collect material names from child GameObjects (since SplitMode = Material)
+                foreach (Transform child in model.transform)
+                {
+                    // Check if the child has a renderer, indicating it's likely a material part
+                    if (child.GetComponent<MeshRenderer>() != null)
+                    {
+                         materialNames.Add(child.name);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Child object {child.name} skipped, no MeshRenderer found.");
+                    }
+                }
+            }
+
+            if (materialNames.Count > 0)
+            {
+                Debug.Log($"Found materials to map: {string.Join(", ", materialNames)}");
+
+                // Subscribe to the confirmation event (unsubscribe first to prevent duplicates)
+                materialMapperUI.OnMappingsConfirmed -= HandleMaterialMappings; // Use '-=' first
+                materialMapperUI.OnMappingsConfirmed += HandleMaterialMappings; // Then use '+='
+
+                // Populate and show the UI panel
+                materialMapperUI.PopulateMappings(materialNames);
+                materialMapperUI.Show();
+
+                // At this point, the coroutine effectively pauses its 'main' work
+                // The rest of the logic (like OnModelLoaded) will run AFTER
+                // the user interacts with the UI and HandleMaterialMappings is called.
+                // So, we stop the coroutine here for now.
+                yield break; // IMPORTANT: Exit coroutine here, HandleMaterialMappings will continue the flow
+            }
+            else
+            {
+                 Debug.LogWarning("Material Mapper UI assigned, but no material child objects found on the loaded model.");
+                 // No mapping needed, proceed directly to final step
+                 FinalizeModelLoad();
+            }
         }
+        else
+        {
+            Debug.LogWarning("Material Mapper UI is not assigned in the Inspector. Skipping mapping.");
+            // No mapping UI, proceed directly to final step
+            FinalizeModelLoad();
+        }
+        // --- END MATERIAL MAPPING ---
     }
 
     private void NormalizeModelScale()
@@ -353,6 +407,80 @@ public class OpenFile : MonoBehaviour
             
             // Re-apply scaling
             NormalizeModelScale();
+        }
+    }
+
+    private void HandleMaterialMappings(Dictionary<string, AggregateType> materialMappings)
+    {
+        Debug.Log("Material mappings confirmed by UI!");
+
+        if (model != null)
+        {
+            foreach (Transform child in model.transform)
+            {
+                // Check if this child's name exists in the mapping dictionary
+                if (materialMappings.TryGetValue(child.name, out AggregateType realMaterial))
+                {
+                    if (realMaterial != null)
+                    {
+                        // Add or get the component to store the mapped material
+                        MaterialProperties materialProps = child.gameObject.GetComponent<MaterialProperties>();
+                        if (materialProps == null) // Add if it doesn't exist
+                        {
+                            materialProps = child.gameObject.AddComponent<MaterialProperties>();
+                        }
+                        materialProps.realMaterial = realMaterial; // Assign the ScriptableObject
+
+                        Debug.Log($"Applied '{realMaterial.realmaterialName}' properties to '{child.name}'");
+                    }
+                    else
+                    {
+                         Debug.LogWarning($"Mapping for '{child.name}' resulted in a null AggregateType.");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"No mapping found for imported material/object: '{child.name}'");
+                    // Optionally add a default MaterialProperties component or handle as needed
+                }
+            }
+        }
+        else
+        {
+             Debug.LogError("HandleMaterialMappings called, but the loaded model reference is null!");
+        }
+
+        // Now that mappings are applied, finalize the load process
+        FinalizeModelLoad();
+    }
+
+    private void FinalizeModelLoad()
+    {
+        Debug.Log("Finalizing model load process...");
+
+        // Any other final setup steps for the model could go here
+
+        // Invoke the main event to notify other scripts the model is fully loaded and mapped
+        if (OnModelLoaded != null)
+        {
+            if (model != null)
+            {
+                 OnModelLoaded(model);
+                 Debug.Log($"OnModelLoaded event invoked for model: {model.name}");
+            }
+            else
+            {
+                 Debug.LogError("Attempted to invoke OnModelLoaded, but model is null.");
+            }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Clean up event subscription to prevent memory leaks
+        if (materialMapperUI != null)
+        {
+            materialMapperUI.OnMappingsConfirmed -= HandleMaterialMappings;
         }
     }
 }
