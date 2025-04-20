@@ -1,6 +1,12 @@
 using UnityEngine;
 
 // Ensure this script is saved as "MaterialProperties.cs"
+public enum AciElementType { Slab, Beam, Wall, ConcreteColumn, ProtectedSteelColumn, Other }
+public enum AciRestraint { Restrained, Unrestrained, NotApplicable }
+public enum AciPrestress { Prestressed, Nonprestressed, NotApplicable }
+
+public enum UnitSystem { Metric, Imperial }
+
 public class MaterialProperties : MonoBehaviour
 {
     // This field will hold the reference to the ScriptableObject asset (AggregateType)
@@ -8,29 +14,29 @@ public class MaterialProperties : MonoBehaviour
     public AggregateType realMaterial; // Make sure the AggregateType class is compiled
 
     // --- ACI Specific Properties ---
-    public enum AciElementType { Slab, Beam, Wall, ConcreteColumn, ProtectedSteelColumn, Other }
     public AciElementType elementType = AciElementType.Other;
 
-    public enum AciRestraint { Restrained, Unrestrained, NotApplicable }
     public AciRestraint restraint = AciRestraint.NotApplicable;
 
-    public enum AciPrestress { Prestressed, Nonprestressed, NotApplicable }
     public AciPrestress prestress = AciPrestress.NotApplicable;
 
-    [Tooltip("(inches) - CRUCIAL for beams/slabs/columns")]
-    public float actualCover_u = 1.0f;
+    // Input unit system for the dimension values below (Metric or Imperial)
+    public UnitSystem inputUnitSystem;
 
-    [Tooltip("(inches) - CRUCIAL for walls/slabs")]
-    public float actualEquivalentThickness_te = 4.0f;
+    [Tooltip("Actual concrete cover (in meters, converted from input unit)")]
+    public float actualCover_u = 0.0254f; // Default 1 inch converted to meters
 
-    [Tooltip("(inches) - CRUCIAL for columns")]
-    public float actualLeastDimension = 12.0f;
+    [Tooltip("Actual equivalent thickness for walls/slabs (in meters, converted from input unit)")]
+    public float actualEquivalentThickness_te = 0.1524f; // Default 6 inches converted to meters
+
+    [Tooltip("Actual least dimension for columns (in meters, converted from input unit)")]
+    public float actualLeastDimension = 0.3048f; // Default 12 inches converted to meters
 
     [Tooltip("For protected steel columns (e.g., \"W10x45\")")]
     public string steelShape = "";
 
-    [Tooltip("(inches) - For protected steel columns")]
-    public float actualProtectionThickness_h = 2.0f;
+    [Tooltip("Actual protection thickness for protected steel columns (in meters, converted from input unit)")]
+    public float actualProtectionThickness_h = 0.0508f; // Default 2 inches converted to meters
     // --- End ACI Specific Properties ---
 
     // Example helper method to get thickness from the assigned ScriptableObject

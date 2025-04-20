@@ -431,13 +431,32 @@ public class OpenFile : MonoBehaviour
                         }
                         materialProps.realMaterial = realMaterial; // Assign the ScriptableObject
 
-                        // MVP: Set default ACI values for all mapped objects
+                        // Determine the input unit system based on the dropdown selection
+                        UnitSystem selectedUnitSystem = UnitSystem.Imperial; // Default to Imperial if autodetect
+                        if (unitDropdown != null)
+                        {
+                            // Dropdown indices: 0=Autodetect, 1=mm, 2=m, 3=ft, 4=in
+                            if (unitDropdown.value == 1 || unitDropdown.value == 2)
+                            {
+                                selectedUnitSystem = UnitSystem.Metric;
+                            }
+                            else if (unitDropdown.value == 3 || unitDropdown.value == 4)
+                            {
+                                selectedUnitSystem = UnitSystem.Imperial;
+                            }
+                            // If value is 0 (Autodetect), we'll stick with the default Imperial assumption for the *source* of these ACI defaults.
+                        }
+                        materialProps.inputUnitSystem = selectedUnitSystem;
+
+                        // MVP: Set default ACI values (converted to meters for internal storage)
+                        // Defaulting to values corresponding to an Imperial input (1.5 inches, 6.0 inches)
+                        float inchesToMeters = 0.0254f;
                         materialProps.elementType = AciElementType.Slab;
                         materialProps.restraint = AciRestraint.Unrestrained;
                         materialProps.prestress = AciPrestress.Nonprestressed;
-                        materialProps.actualCover_u = 1.5f; // inches
-                        materialProps.actualEquivalentThickness_te = 6.0f; // inches
-                        // (other fields can be left at their defaults for now)
+                        materialProps.actualCover_u = 1.5f * inchesToMeters; // 1.5 inches converted to meters
+                        materialProps.actualEquivalentThickness_te = 6.0f * inchesToMeters; // 6.0 inches converted to meters
+                        // actualLeastDimension, steelShape, actualProtectionThickness_h can be left at their defaults for now or set based on element type assumption
 
                         Debug.Log($"Applied '{realMaterial.realmaterialName}' properties to '{child.name}'");
                     }
