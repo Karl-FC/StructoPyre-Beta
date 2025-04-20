@@ -7,6 +7,32 @@ public class MaterialProperties : MonoBehaviour
     // assigned after the user confirms the mapping in the UI.
     public AggregateType realMaterial; // Make sure the AggregateType class is compiled
 
+    // --- ACI Specific Properties ---
+    public enum AciElementType { Slab, Beam, Wall, ConcreteColumn, ProtectedSteelColumn, Other }
+    public AciElementType elementType = AciElementType.Other;
+
+    public enum AciRestraint { Restrained, Unrestrained, NotApplicable }
+    public AciRestraint restraint = AciRestraint.NotApplicable;
+
+    public enum AciPrestress { Prestressed, Nonprestressed, NotApplicable }
+    public AciPrestress prestress = AciPrestress.NotApplicable;
+
+    [Tooltip("(inches) - CRUCIAL for beams/slabs/columns")]
+    public float actualCover_u = 1.0f;
+
+    [Tooltip("(inches) - CRUCIAL for walls/slabs")]
+    public float actualEquivalentThickness_te = 4.0f;
+
+    [Tooltip("(inches) - CRUCIAL for columns")]
+    public float actualLeastDimension = 12.0f;
+
+    [Tooltip("For protected steel columns (e.g., \"W10x45\")")]
+    public string steelShape = "";
+
+    [Tooltip("(inches) - For protected steel columns")]
+    public float actualProtectionThickness_h = 2.0f;
+    // --- End ACI Specific Properties ---
+
     // Example helper method to get thickness from the assigned ScriptableObject
     // Returns a default value if no material is assigned.
     public float GetThickness()
