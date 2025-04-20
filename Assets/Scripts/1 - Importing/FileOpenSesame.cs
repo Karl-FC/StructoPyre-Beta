@@ -431,6 +431,14 @@ public class OpenFile : MonoBehaviour
                         }
                         materialProps.realMaterial = realMaterial; // Assign the ScriptableObject
 
+                        // MVP: Set default ACI values for all mapped objects
+                        materialProps.elementType = AciElementType.Slab;
+                        materialProps.restraint = AciRestraint.Unrestrained;
+                        materialProps.prestress = AciPrestress.Nonprestressed;
+                        materialProps.actualCover_u = 1.5f; // inches
+                        materialProps.actualEquivalentThickness_te = 6.0f; // inches
+                        // (other fields can be left at their defaults for now)
+
                         Debug.Log($"Applied '{realMaterial.realmaterialName}' properties to '{child.name}'");
                     }
                     else
