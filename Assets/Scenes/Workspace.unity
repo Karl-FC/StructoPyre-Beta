@@ -251,12 +251,12 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1254432487}
+  - {fileID: 272436747}
   - {fileID: 717420176}
   - {fileID: 1662283629}
   - {fileID: 867413616}
   - {fileID: 1188792297}
   - {fileID: 62090787}
-  - {fileID: 272436747}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -413,7 +413,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000023832532}
+  m_AnchoredPosition: {x: 0, y: 0.0038835625}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &175664792
@@ -2636,6 +2636,7 @@ Transform:
   - {fileID: 2041368318}
   - {fileID: 703541340}
   - {fileID: 958405513}
+  - {fileID: 2012568834}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &958405512
@@ -2905,7 +2906,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1516158312}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9997979
+  m_Size: 0.9998467
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -6035,6 +6036,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1969945610}
   m_CullTransparentMesh: 1
+--- !u!1 &2012568833
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2012568834}
+  - component: {fileID: 2012568835}
+  m_Layer: 0
+  m_Name: UIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2012568834
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2012568833}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 20.175903, y: -53.473022, z: 1.2036502}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 903942112}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2012568835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2012568833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3fe85c59470efe143b316ea85e353a3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MainImportPanel: {fileID: 717420175}
+  MaterialMapperPanel: {fileID: 1662283628}
+  BackgroundPanel: {fileID: 1254432486}
+  SimulationGUIPanel: {fileID: 272436746}
 --- !u!1 &2041368316
 GameObject:
   m_ObjectHideFlags: 0

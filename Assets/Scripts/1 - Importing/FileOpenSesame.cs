@@ -145,6 +145,9 @@ public class OpenFile : MonoBehaviour
         // First let's apply the X-flipping but keep scale neutral
         model.transform.localScale = new Vector3(-1, 1, 1);
         
+        // Show the material mapping UI via UIManager
+        UIManager.Instance.ShowMaterialMapper();
+        
         // Apply normalization to ensure proper scaling
         NormalizeModelScale();
         
@@ -207,6 +210,13 @@ public class OpenFile : MonoBehaviour
             FinalizeModelLoad();
         }
         // --- END MATERIAL MAPPING ---
+
+        // Now that mappings are applied, finalize the load process
+        FinalizeModelLoad();
+
+        // Show simulation GUI after mapping confirmation
+        UIManager.Instance.ShowSimulationGUI();
+        // (Enable player controls here if needed)
     }
 
     private void NormalizeModelScale()

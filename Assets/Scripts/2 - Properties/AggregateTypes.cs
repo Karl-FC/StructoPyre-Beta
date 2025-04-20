@@ -90,7 +90,7 @@ public class RealMaterialMapperUI : MonoBehaviour
         OnMappingsConfirmed?.Invoke(materialMappings);
         
         // Hide the panel
-        gameObject.SetActive(false);
+        UIManager.Instance.ShowSimulationGUI();
     }
 
     public void Show()
