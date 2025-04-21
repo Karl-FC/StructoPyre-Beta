@@ -56,14 +56,34 @@ public class OpenFile : MonoBehaviour
     [DllImport("__Internal")]
     private static extern void UploadFile(string gameObjectName, string methodName, string filter, bool multiple);
 
+    private string objContentWebGL; // Temporary storage for OBJ content
+
     public void OnClickOpen() {
-        UploadFile(gameObject.name, "OnFileUpload", ".obj,.mtl", false);
+        // Request OBJ file first
+        UploadFile(gameObject.name, "OnFileUpload", ".obj", false);
     }
 
-    // Called from browser
-    public void OnFileUpload(string url) {
-        StartCoroutine(OutputRoutineOpen(url));
+    // Called from browser after OBJ file selection
+    public void OnFileUpload(string objContent) {
+        objContentWebGL = objContent; // Store OBJ content
+        // Now request the MTL file
+        UploadFile(gameObject.name, "OnMTLFileUpload", ".mtl", false);
+        Debug.Log("OBJ file received. Please select the corresponding MTL file.");
+        // Optionally: Show a message to the user indicating they need to select the MTL file.
     }
+
+    // Called from browser after MTL file selection
+    public void OnMTLFileUpload(string mtlContent) {
+        if (string.IsNullOrEmpty(objContentWebGL))
+        {
+            Debug.LogError("MTL file received, but OBJ content was missing!");
+            return;
+        }
+        Debug.Log("MTL file received. Loading model...");
+        StartCoroutine(OutputRoutineOpenWebGL(objContentWebGL, mtlContent));
+        objContentWebGL = null; // Clear temporary storage
+    }
+
 #else
 
     // Standalone platforms & editor    s
@@ -86,40 +106,24 @@ public class OpenFile : MonoBehaviour
         }
     }
 
-    private IEnumerator OutputRoutineOpen(string url)
+#if UNITY_WEBGL && !UNITY_EDITOR
+    private IEnumerator OutputRoutineOpenWebGL(string objContent, string mtlContent)
     {
-        // Get the directory path of the OBJ file
-        string objPath = url;
-        string directoryPath = Path.GetDirectoryName(objPath);
-        string fileName = Path.GetFileNameWithoutExtension(objPath);
-        string mtlPath = Path.Combine(directoryPath, fileName + ".mtl");
-
-        // Load the OBJ file
-        UnityWebRequest www = UnityWebRequest.Get(objPath);
-        yield return www.SendWebRequest();
-        if (www.result != UnityWebRequest.Result.Success)
-        {
-            Debug.Log("WWW ERROR: " + www.error);
-            yield break;
-        }
-
-        // Load the MTL file if it exists
-        UnityWebRequest mtlRequest = UnityWebRequest.Get(mtlPath);
-        yield return mtlRequest.SendWebRequest();
-        
-        // Create memory streams for both files
-        MemoryStream objStream = new MemoryStream(Encoding.UTF8.GetBytes(www.downloadHandler.text));
+        // For WebGL, create streams directly from content strings
+        MemoryStream objStream = new MemoryStream(Encoding.UTF8.GetBytes(objContent));
         MemoryStream mtlStream = null;
-        
-        if (mtlRequest.result == UnityWebRequest.Result.Success)
+
+        if (!string.IsNullOrEmpty(mtlContent))
         {
-            mtlStream = new MemoryStream(Encoding.UTF8.GetBytes(mtlRequest.downloadHandler.text));
-            Debug.Log("Successfully loaded MTL file");
+            mtlStream = new MemoryStream(Encoding.UTF8.GetBytes(mtlContent));
+            Debug.Log("Processing OBJ and MTL content received from browser.");
         }
         else
         {
-            Debug.Log("No MTL file found or error loading MTL file");
+            Debug.LogWarning("Processing OBJ content received from browser. No MTL content provided or MTL file selection was cancelled.");
         }
+
+        // --- Common Model Loading Logic (Copied & adapted from original OutputRoutineOpen) ---
 
         // Load the model with materials
         if (model != null)
@@ -134,26 +138,34 @@ public class OpenFile : MonoBehaviour
         }
         else
         {
-            model = loader.Load(objStream);
+            model = loader.Load(objStream); // Loads OBJ only
         }
-        
-        if (model == null) yield break; // Exit if model loading failed
-        
+
+        // Close streams
+        objStream?.Close();
+        mtlStream?.Close();
+
+        if (model == null)
+        {
+            Debug.LogError("Failed to load model from content.");
+            yield break; // Exit if model loading failed
+        }
+
         // Place the model at the origin
         model.transform.position = Vector3.zero;
-        
+
         // First let's apply the X-flipping but keep scale neutral
         model.transform.localScale = new Vector3(-1, 1, 1);
-        
+
         // Show the material mapping UI via UIManager
         UIManager.Instance.ShowMaterialMapper();
-        
+
         // Apply normalization to ensure proper scaling
         NormalizeModelScale();
-        
+
         // Apply double-sided faces
         DoublicateFaces();
-        
+
         // Store imported model in global variables
         GlobalVariables.ImportedModel = model;
 
@@ -211,12 +223,173 @@ public class OpenFile : MonoBehaviour
         }
         // --- END MATERIAL MAPPING ---
 
+        // Now that mappings are applied, finalize the load process (This might be redundant if called within HandleMaterialMappings)
+        // Consider if FinalizeModelLoad() needs to be called here too or only after mapping.
+        // Based on the flow, it seems HandleMaterialMappings calls FinalizeModelLoad, so it might be unnecessary here.
+
+        // Show simulation GUI after mapping confirmation (This should likely happen *after* FinalizeModelLoad completes)
+        // UIManager.Instance.ShowSimulationGUI(); // Moved to FinalizeModelLoad or after OnModelLoaded event?
+    }
+#endif
+
+    // This coroutine now ONLY handles Standalone/Editor paths (using file URI)
+    private IEnumerator OutputRoutineOpen(string url)
+    {
+#if UNITY_EDITOR || UNITY_STANDALONE
+        // For Standalone/Editor, 'url' is the URI/Path
+        string objPath = url; // Keep original name for clarity in this block
+        string directoryPath = Path.GetDirectoryName(objPath);
+        string fileName = Path.GetFileNameWithoutExtension(objPath);
+        string mtlPath = Path.Combine(directoryPath, fileName + ".mtl");
+
+        // Load the OBJ file
+        UnityWebRequest www = UnityWebRequest.Get(objPath);
+        yield return www.SendWebRequest();
+        if (www.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError("WWW ERROR loading OBJ: " + www.error + " from path: " + objPath);
+            yield break;
+        }
+        Debug.Log("Successfully loaded OBJ file from path: " + objPath);
+
+
+        // Load the MTL file if it exists
+        Uri mtlUri;
+        MemoryStream mtlStream = null;
+        // Try converting mtlPath to a valid URI before requesting
+        if (Uri.TryCreate(mtlPath, UriKind.Absolute, out mtlUri))
+        {
+            UnityWebRequest mtlRequest = UnityWebRequest.Get(mtlUri);
+            yield return mtlRequest.SendWebRequest();
+
+             if (mtlRequest.result == UnityWebRequest.Result.Success)
+            {
+                mtlStream = new MemoryStream(Encoding.UTF8.GetBytes(mtlRequest.downloadHandler.text));
+                Debug.Log("Successfully loaded MTL file from path: " + mtlPath);
+            }
+            else
+            {
+                 Debug.LogWarning("Could not load MTL file from path: " + mtlPath + ". Error: " + mtlRequest.error);
+            }
+            mtlRequest.Dispose(); // Dispose the request
+        }
+        else
+        {
+             Debug.LogWarning("Could not create a valid URI for the MTL file path: " + mtlPath);
+        }
+
+
+        // Create memory streams for both files
+        MemoryStream objStream = new MemoryStream(Encoding.UTF8.GetBytes(www.downloadHandler.text));
+        www.Dispose(); // Dispose the OBJ request
+
+        // --- Common Model Loading Logic (Copied & adapted) ---
+
+        // Load the model with materials
+        if (model != null)
+        {
+            Destroy(model);
+        }
+
+        OBJLoader loader = new OBJLoader();
+        if (mtlStream != null)
+        {
+            model = loader.Load(objStream, mtlStream);
+        }
+        else
+        {
+            model = loader.Load(objStream); // Loads OBJ only
+        }
+
+        // Close streams
+        objStream?.Close();
+        mtlStream?.Close();
+
+        if (model == null)
+        {
+            Debug.LogError("Failed to load model from path: " + objPath);
+            yield break; // Exit if model loading failed
+        }
+
+        // Place the model at the origin
+        model.transform.position = Vector3.zero;
+
+        // First let's apply the X-flipping but keep scale neutral
+        model.transform.localScale = new Vector3(-1, 1, 1);
+
+        // Show the material mapping UI via UIManager
+        UIManager.Instance.ShowMaterialMapper();
+
+        // Apply normalization to ensure proper scaling
+        NormalizeModelScale();
+
+        // Apply double-sided faces
+        DoublicateFaces();
+
+        // Store imported model in global variables
+        GlobalVariables.ImportedModel = model;
+
+        // --- START MATERIAL MAPPING ---
+        if (materialMapperUI != null)
+        {
+            List<string> materialNames = new List<string>();
+            if (model != null)
+            {
+                // Collect material names from child GameObjects (since SplitMode = Material)
+                foreach (Transform child in model.transform)
+                {
+                    // Check if the child has a renderer, indicating it's likely a material part
+                    if (child.GetComponent<MeshRenderer>() != null)
+                    {
+                         materialNames.Add(child.name);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Child object {child.name} skipped, no MeshRenderer found.");
+                    }
+                }
+            }
+
+            if (materialNames.Count > 0)
+            {
+                Debug.Log($"Found materials to map: {string.Join(", ", materialNames)}");
+
+                // Subscribe to the confirmation event (unsubscribe first to prevent duplicates)
+                materialMapperUI.OnMappingsConfirmed -= HandleMaterialMappings; // Use '-=' first
+                materialMapperUI.OnMappingsConfirmed += HandleMaterialMappings; // Then use '+='
+
+                // Populate and show the UI panel
+                materialMapperUI.PopulateMappings(materialNames);
+                materialMapperUI.Show();
+
+                // Exit coroutine, HandleMaterialMappings will continue the flow
+                yield break;
+            }
+            else
+            {
+                 Debug.LogWarning("Material Mapper UI assigned, but no material child objects found on the loaded model.");
+                 // No mapping needed, proceed directly to final step
+                 FinalizeModelLoad();
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Material Mapper UI is not assigned in the Inspector. Skipping mapping.");
+            // No mapping UI, proceed directly to final step
+            FinalizeModelLoad();
+        }
+        // --- END MATERIAL MAPPING ---
+
         // Now that mappings are applied, finalize the load process
-        FinalizeModelLoad();
+        // FinalizeModelLoad(); // Likely redundant, called by HandleMaterialMappings or the else block above
 
         // Show simulation GUI after mapping confirmation
-        UIManager.Instance.ShowSimulationGUI();
-        // (Enable player controls here if needed)
+        // UIManager.Instance.ShowSimulationGUI(); // Should be called after FinalizeModelLoad completes
+#else
+        // Handle cases where this coroutine might be called inappropriately on WebGL
+        Debug.LogError("OutputRoutineOpen(string url) called on unsupported platform (WebGL). Use OutputRoutineOpenWebGL instead.");
+        yield break; // Stop execution if on the wrong platform
+#endif
     }
 
     private void NormalizeModelScale()

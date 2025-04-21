@@ -48,7 +48,6 @@ var StandaloneFileBrowserWebGLPlugin = {
                         if (filesRead === files.length) {
                             // All files read, send to Unity
                             SendMessage(gameObjectName, methodName, fileContents.join('[SPLIT]'));
-                            document.body.removeChild(fileInput);
                         }
                     };
                     reader.readAsText(file);
