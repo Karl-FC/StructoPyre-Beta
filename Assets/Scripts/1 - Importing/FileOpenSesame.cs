@@ -707,8 +707,25 @@ public class OpenFile : MonoBehaviour
                 MaterialProperties props = child.GetComponent<MaterialProperties>();
                 if (props != null)
                 {
+                    // Add Mesh Collider if missing for raycasting
+                    if (child.GetComponent<MeshCollider>() == null)
+                    {
+                        child.gameObject.AddComponent<MeshCollider>();
+                        Debug.Log($"Added MeshCollider to {child.name}");
+                    }
+
+                    // Set the layer for raycasting
+                    string layerName = "InspectableModel"; // Make sure this matches your actual layer name
+                    int layerValue = LayerMask.NameToLayer(layerName);
+                    child.gameObject.layer = layerValue;
+                    // ADD DEBUG LOG HERE
+                    if (layerValue == -1)
+                        Debug.LogWarning($"Layer '{layerName}' does not exist! Could not set layer for {child.name}.");
+                    else
+                        Debug.Log($"Set layer for {child.name} to {layerValue} ({layerName})");
+
                     props.achievedFireResistanceRating = AciRatingCalculator.CalculateRating(props);
-                    Debug.Log($"Calculated rating for '{child.name}': {props.achievedFireResistanceRating} hours");
+                    // Debug.Log($"Calculated rating for '{child.name}': {props.achievedFireResistanceRating} hours"); // Original log, maybe comment out if too spammy
                 }
             }
         }

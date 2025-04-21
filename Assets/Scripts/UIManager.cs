@@ -1,8 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI; // Required for Button
 
-public enum UIMode { Simulator, Inspector } // Define the modes
-
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
@@ -23,8 +21,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Color activeModeColor = Color.grey;   // Color for the active button
     [SerializeField] private Color inactiveModeColor = Color.white; // Color for the inactive button
 
-    private UIMode currentMode;
-
     void Awake()
     {
         // Singleton pattern
@@ -38,27 +34,30 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
-        // InitUI(); // Keep or remove depending on whether you want main menu shown initially
+        // InitUI(); // Optional: Set initial panel visibility
 
         // Add listeners for the mode buttons
         if (inspectorModeButton != null)
-            inspectorModeButton.onClick.AddListener(EnableInspectorMode);
+            inspectorModeButton.onClick.AddListener(ToggleInspectorMode); // Changed listener
         else
             Debug.LogError("Inspector Mode Button not assigned in UIManager.");
 
         if (simulatorModeButton != null)
-            simulatorModeButton.onClick.AddListener(EnableSimulatorMode);
+            simulatorModeButton.onClick.AddListener(ToggleSimulatorMode); // Changed listener
         else
             Debug.LogError("Simulator Mode Button not assigned in UIManager.");
 
-        // Check if dependencies are assigned
+        // Check if dependencies are assigned!
         if (simulationControlsPanel == null)
              Debug.LogError("Simulation Controls Panel not assigned in UIManager.");
         if (faceInspector == null)
              Debug.LogError("Face Inspector component not assigned in UIManager.");
 
-        // Set initial mode (e.g., Simulator mode) and update visuals
-        SetMode(UIMode.Simulator); // Start in Simulator mode
+        // Set initial visual state based on component defaults
+        if (faceInspector != null && inspectorModeButton != null)
+            SetButtonColor(inspectorModeButton, faceInspector.gameObject.activeSelf); // Assuming FaceInspector starts enabled/disabled via its GameObject or internal flag
+        if (simulationControlsPanel != null && simulatorModeButton != null)
+            SetButtonColor(simulatorModeButton, simulationControlsPanel.activeSelf);
     }
 
     /// <summary>
@@ -104,67 +103,41 @@ public class UIManager : MonoBehaviour
         if (SimulationGUIPanel != null) SimulationGUIPanel.SetActive(SimGUI);
     }
 
-    // --- Mode Switching Methods ---
+    // --- Mode Switching Methods (Now Independent Toggles) ---
 
-    // Public methods called by button OnClick events
-    public void EnableInspectorMode()
+    public void ToggleInspectorMode()
     {
-        SetMode(UIMode.Inspector);
+        if (faceInspector == null || inspectorModeButton == null) return;
+
+        bool newState = !faceInspector.IsInspectorCurrentlyActive;
+        faceInspector.SetInspectorActive(newState);
+        SetButtonColor(inspectorModeButton, newState);
+        Debug.Log($"Inspector Mode Toggled: {newState}");
     }
 
-    public void EnableSimulatorMode()
+    public void ToggleSimulatorMode()
     {
-        SetMode(UIMode.Simulator);
+        if (simulationControlsPanel == null || simulatorModeButton == null) return;
+
+        bool newState = !simulationControlsPanel.activeSelf; // Check current state and flip it
+        simulationControlsPanel.SetActive(newState);
+        SetButtonColor(simulatorModeButton, newState);
+        Debug.Log($"Simulator Controls Toggled: {newState}");
     }
 
-    // Central method to handle mode switching logic
-    private void SetMode(UIMode newMode)
-    {
-        // If the requested mode is already active, do nothing
-        // if (newMode == currentMode) return; // Uncomment this line if you want clicking the active button to do nothing
-
-        currentMode = newMode;
-        Debug.Log($"Switching to {currentMode} Mode");
-
-        if (faceInspector == null || simulationControlsPanel == null || inspectorModeButton == null || simulatorModeButton == null)
-        {
-            Debug.LogError("Cannot set mode, required components not assigned in UIManager.");
-            return;
-        }
-
-        // Activate/Deactivate components based on mode
-        faceInspector.SetInspectorActive(currentMode == UIMode.Inspector);
-        simulationControlsPanel.SetActive(currentMode == UIMode.Simulator);
-
-        // Update button visuals
-        UpdateButtonVisuals();
-    }
-
-    // Helper to update button colors based on the current mode
-    private void UpdateButtonVisuals()
-    {
-        SetButtonColor(inspectorModeButton, currentMode == UIMode.Inspector);
-        SetButtonColor(simulatorModeButton, currentMode == UIMode.Simulator);
-    }
-
-    // Helper to set the color tint of a button
+    // Helper to set the color tint of a button (Keep this helper)
     private void SetButtonColor(Button button, bool isActive)
     {
         if (button == null) return;
-        ColorBlock colors = button.colors;
-        colors.colorMultiplier = isActive ? 1f : 0.8f; // Example: slightly dim inactive button
-        // Or change the normalColor directly if preferred:
-        // colors.normalColor = isActive ? activeModeColor : inactiveModeColor;
-        // colors.highlightedColor = isActive ? activeModeColor * 0.9f : inactiveModeColor * 0.9f; // Adjust highlight too
-        // colors.pressedColor = isActive ? activeModeColor * 0.7f : inactiveModeColor * 0.7f; // Adjust pressed too
-        // colors.selectedColor = isActive ? activeModeColor : inactiveModeColor; // Adjust selected too
-        button.colors = colors;
-
-        // Alternative: Change Image component color if button has one
+        // Using Image component color change - preferred for direct color setting
         Image img = button.GetComponent<Image>();
         if (img != null)
         {
             img.color = isActive ? activeModeColor : inactiveModeColor;
         }
+        // Alternative using ColorBlock:
+        // ColorBlock colors = button.colors;
+        // colors.colorMultiplier = isActive ? 1f : 0.8f; // Adjust multiplier or colors directly
+        // button.colors = colors;
     }
 }

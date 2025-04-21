@@ -13,6 +13,9 @@ public class FaceInspector : MonoBehaviour
     private Camera mainCamera;
     private bool isInspectorActive = false; // Start inactive by default
 
+    // Public getter for the internal state
+    public bool IsInspectorCurrentlyActive => isInspectorActive;
+
     void Start()
     {
         mainCamera = GetComponent<Camera>();
@@ -51,9 +54,8 @@ public class FaceInspector : MonoBehaviour
         Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
         RaycastHit hit;
 
-        // Perform the raycast
-        // Using LayerMask is optional but recommended for performance if you only want to inspect specific layers
-        bool didHit = Physics.Raycast(ray, out hit, maxRayDistance); // Add layerMask parameter if using LayerMask
+        // Perform the raycast, now using the LayerMask
+        bool didHit = Physics.Raycast(ray, out hit, maxRayDistance, inspectLayerMask);
 
         if (didHit)
         {
