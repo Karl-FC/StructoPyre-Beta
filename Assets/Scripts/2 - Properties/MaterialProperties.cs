@@ -4,6 +4,7 @@ using UnityEngine;
 public enum AciElementType { Slab, Beam, Wall, ConcreteColumn, ProtectedSteelColumn, Other }
 public enum AciRestraint { Restrained, Unrestrained, NotApplicable }
 public enum AciPrestress { Prestressed, Nonprestressed, NotApplicable }
+public enum AciColumnFireExposure { TwoParallelSides, FourSides, Other }
 
 public enum UnitSystem { Metric, Imperial }
 
@@ -37,6 +38,15 @@ public class MaterialProperties : MonoBehaviour
 
     [Tooltip("Actual protection thickness for protected steel columns (in meters, converted from input unit)")]
     public float actualProtectionThickness_h = 0.0508f; // Default 2 inches converted to meters
+
+    [Tooltip("Material used for protection of steel columns")]
+    public AggregateType protectionMaterial;
+
+    [Tooltip("Fire exposure condition for concrete columns")]
+    public AciColumnFireExposure columnFireExposure = AciColumnFireExposure.Other;
+
+    [Tooltip("Calculated fire resistance rating (in hours) based on ACI tables")]
+    public float achievedFireResistanceRating = 0.0f;
     // --- End ACI Specific Properties ---
 
     // Example helper method to get thickness from the assigned ScriptableObject

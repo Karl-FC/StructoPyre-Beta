@@ -668,6 +668,24 @@ public class OpenFile : MonoBehaviour
     {
         Debug.Log("Finalizing model load process...");
 
+        // Calculate achieved fire rating for all relevant children
+        if (model != null)
+        {
+            foreach (Transform child in model.transform)
+            {
+                MaterialProperties props = child.GetComponent<MaterialProperties>();
+                if (props != null)
+                {
+                    props.achievedFireResistanceRating = AciRatingCalculator.CalculateRating(props);
+                    Debug.Log($"Calculated rating for '{child.name}': {props.achievedFireResistanceRating} hours");
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Cannot calculate ratings because model is null during FinalizeModelLoad.");
+        }
+
         // Any other final setup steps for the model could go here
 
         // Invoke the main event to notify other scripts the model is fully loaded and mapped
