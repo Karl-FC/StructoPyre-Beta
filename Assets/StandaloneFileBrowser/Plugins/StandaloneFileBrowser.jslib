@@ -35,16 +35,25 @@ var StandaloneFileBrowserWebGLPlugin = {
             this.value = null;
         };
         fileInput.onchange = function (event) {
-            // multiselect works
-            var urls = [];
-            for (var i = 0; i < event.target.files.length; i++) {
-                urls.push(URL.createObjectURL(event.target.files[i]));
-            }
-            // File selected
-            SendMessage(gameObjectName, methodName, urls.join());
+            var files = event.target.files;
+            var fileContents = [];
+            var filesRead = 0;
 
-            // Remove after file selected
-            document.body.removeChild(fileInput);
+            for (var i = 0; i < files.length; i++) {
+                (function(file, idx) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        fileContents[idx] = e.target.result;
+                        filesRead++;
+                        if (filesRead === files.length) {
+                            // All files read, send to Unity
+                            SendMessage(gameObjectName, methodName, fileContents.join('[SPLIT]'));
+                            document.body.removeChild(fileInput);
+                        }
+                    };
+                    reader.readAsText(file);
+                })(files[i], i);
+            }
         }
         document.body.appendChild(fileInput);
 
