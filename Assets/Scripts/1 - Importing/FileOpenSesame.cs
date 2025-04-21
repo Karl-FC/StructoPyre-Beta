@@ -41,8 +41,7 @@ public class OpenFile : MonoBehaviour
     [Header("Model Scaling")]
     [Tooltip("Enable to manually set scale factor instead of auto-detection")]
     [SerializeField] private bool useManualScaling = false;
-    [Tooltip("Scale factor applied when manual scaling is enabled")]
-    [SerializeField] private float manualScaleFactor = 1.0f;
+    private float manualScaleFactor = 1.0f; // Internal flag, not serialized
     [Tooltip("Toggle to show scale debugging information")]
     [SerializeField] private bool showScaleDebugging = true;
 
@@ -50,6 +49,10 @@ public class OpenFile : MonoBehaviour
     [SerializeField] private TMP_Dropdown unitDropdown;
 
     public RealMaterialMapperUI materialMapperUI; // <--- ADD THIS LINE
+
+    // Store initial scale factors determined on click for WebGL two-step process
+    private bool initialIsManualWebGL = false;
+    private float initialScaleFactorWebGL = 1.0f;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
     // WebGL
@@ -59,6 +62,10 @@ public class OpenFile : MonoBehaviour
     private string objContentWebGL; // Temporary storage for OBJ content
 
     public void OnClickOpen() {
+        // Determine initial scaling based on dropdown *at the time of click*
+        DetermineInitialScale(out initialIsManualWebGL, out initialScaleFactorWebGL);
+        Debug.Log($"[OnClickOpen WebGL] Determined initial scale: isManual={initialIsManualWebGL}, factor={initialScaleFactorWebGL}");
+
         // Request OBJ file first
         UploadFile(gameObject.name, "OnFileUpload", ".obj", false);
     }
@@ -79,20 +86,26 @@ public class OpenFile : MonoBehaviour
             Debug.LogError("MTL file received, but OBJ content was missing!");
             return;
         }
-        Debug.Log("MTL file received. Loading model...");
-        StartCoroutine(OutputRoutineOpenWebGL(objContentWebGL, mtlContent));
+        Debug.Log("MTL file received. Loading model with stored initial scale...");
+        // Start coroutine, passing the scale factors determined back when OnClickOpen was called
+        StartCoroutine(OutputRoutineOpenWebGL(objContentWebGL, mtlContent, initialIsManualWebGL, initialScaleFactorWebGL));
         objContentWebGL = null; // Clear temporary storage
     }
 
 #else
 
-    // Standalone platforms & editor    s
+    // Standalone platforms & editor
     public void OnClickOpen()
     {
+        // Determine initial scaling based on dropdown *at the time of click*
+        DetermineInitialScale(out bool isManual, out float scaleFactor);
+        Debug.Log($"[OnClickOpen Standalone] Determined initial scale: isManual={isManual}, factor={scaleFactor}");
+
         string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", new[] { new ExtensionFilter("3D Model Files", "obj", "mtl") }, false);
         if (paths.Length > 0)
         {
-            StartCoroutine(OutputRoutineOpen(new System.Uri(paths[0]).AbsoluteUri));
+            // Start coroutine, passing the determined scale factors
+            StartCoroutine(OutputRoutineOpen(new System.Uri(paths[0]).AbsoluteUri, isManual, scaleFactor));
         }
     }
 #endif
@@ -107,8 +120,9 @@ public class OpenFile : MonoBehaviour
     }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-    private IEnumerator OutputRoutineOpenWebGL(string objContent, string mtlContent)
+    private IEnumerator OutputRoutineOpenWebGL(string objContent, string mtlContent, bool isManual, float scaleFactor)
     {
+        Debug.Log($"[OutputRoutineOpenWebGL] Starting with isManual={isManual}, scaleFactor={scaleFactor}");
         // For WebGL, create streams directly from content strings
         MemoryStream objStream = new MemoryStream(Encoding.UTF8.GetBytes(objContent));
         MemoryStream mtlStream = null;
@@ -160,8 +174,8 @@ public class OpenFile : MonoBehaviour
         // Show the material mapping UI via UIManager
         UIManager.Instance.ShowMaterialMapper();
 
-        // Apply normalization to ensure proper scaling
-        NormalizeModelScale();
+        // Apply normalization using passed-in parameters
+        NormalizeModelScale(isManual, scaleFactor);
 
         // Apply double-sided faces
         DoublicateFaces();
@@ -232,10 +246,11 @@ public class OpenFile : MonoBehaviour
     }
 #endif
 
-    // This coroutine now ONLY handles Standalone/Editor paths (using file URI)
-    private IEnumerator OutputRoutineOpen(string url)
+    // This coroutine now ONLY handles Standalone/Editor paths - accepts scale factors as parameters
+    private IEnumerator OutputRoutineOpen(string url, bool isManual, float scaleFactor)
     {
 #if UNITY_EDITOR || UNITY_STANDALONE
+        Debug.Log($"[OutputRoutineOpen] Starting with isManual={isManual}, scaleFactor={scaleFactor}");
         // For Standalone/Editor, 'url' is the URI/Path
         string objPath = url; // Keep original name for clarity in this block
         string directoryPath = Path.GetDirectoryName(objPath);
@@ -320,8 +335,8 @@ public class OpenFile : MonoBehaviour
         // Show the material mapping UI via UIManager
         UIManager.Instance.ShowMaterialMapper();
 
-        // Apply normalization to ensure proper scaling
-        NormalizeModelScale();
+        // Apply normalization using passed-in parameters
+        NormalizeModelScale(isManual, scaleFactor);
 
         // Apply double-sided faces
         DoublicateFaces();
@@ -392,8 +407,10 @@ public class OpenFile : MonoBehaviour
 #endif
     }
 
-    private void NormalizeModelScale()
+    private void NormalizeModelScale(bool isManual, float factorToApply)
     {
+        Debug.Log($"[NormalizeModelScale] Entered with isManual={isManual}, factorToApply={factorToApply}");
+        
         // Get the model's bounds
         Bounds bounds = GetBound(model);
         
@@ -404,13 +421,14 @@ public class OpenFile : MonoBehaviour
         
         float scaleFactor = 1.0f;
         
-        if (useManualScaling)
+        // Use the passed-in parameters to determine scaling
+        if (isManual) 
         {
-            // Use the manual scale factor if enabled
-            scaleFactor = manualScaleFactor;
+            // Use the factor passed as a parameter
+            scaleFactor = factorToApply;
             if (showScaleDebugging)
             {
-                Debug.Log($"Using manual scale factor: {scaleFactor}");
+                Debug.Log($"Using manual scale factor (from parameters): {scaleFactor}");
             }
         }
         else
@@ -554,7 +572,7 @@ public class OpenFile : MonoBehaviour
             // Reset to base flipped scale first
             model.transform.localScale = new Vector3(-1, 1, 1);
             // Then apply the new scale factor
-            NormalizeModelScale();
+            NormalizeModelScale(useManualScaling, manualScaleFactor);
         }
     }
 
@@ -563,33 +581,46 @@ public class OpenFile : MonoBehaviour
         // If a model is loaded, apply the new scale immediately
         if (model != null)
         {
-            // Reset to base flipped scale first
-            model.transform.localScale = new Vector3(-1, 1, 1);
+            Debug.Log($"[OnUnitTypeChanged] Processing index: {index}. Applying scale to loaded model.");
             
-            // Apply the selected unit conversion
-            useManualScaling = (index != 0); // If not "autodetect", use manual scaling
-            
+            // Determine scale factors based on the NEW index
+            bool isManualScale = (index != 0);
+            float newScaleFactor;
             switch(index)
             {
-                case 0: // Autodetect
-                    useManualScaling = false;
-                    break;
-                case 1: // Metric-millimeters
-                    manualScaleFactor = 0.001f; // 1mm = 0.001m in Unity
-                    break;
-                case 2: // Metric-meters
-                    manualScaleFactor = 1.0f;   // 1m = 1m in Unity
-                    break;
-                case 3: // Imperial-feet
-                    manualScaleFactor = 0.3048f; // 1ft = 0.3048m
-                    break;
-                case 4: // Imperial-inches
-                    manualScaleFactor = 0.0254f; // 1in = 0.0254m
-                    break;
+                case 1: newScaleFactor = 0.001f; break;
+                case 2: newScaleFactor = 1.0f; break;
+                case 3: newScaleFactor = 0.3048f; break;
+                case 4: newScaleFactor = 0.0254f; break;
+                default: isManualScale = false; newScaleFactor = 1.0f; break; // Autodetect or unknown
             }
+
+            // Store these potentially for future use IF the listener issue gets fixed
+            // but NormalizeModelScale will use the passed parameters for this call.
+            this.useManualScaling = isManualScale; 
+            this.manualScaleFactor = newScaleFactor;
+
+            // Reset scale before applying new one
+            model.transform.localScale = new Vector3(-1, 1, 1);
             
-            // Re-apply scaling
-            NormalizeModelScale();
+            // Apply scaling using factors determined here
+            Debug.Log($"[OnUnitTypeChanged] Calling NormalizeModelScale with isManual={isManualScale}, newScaleFactor={newScaleFactor}");
+            NormalizeModelScale(isManualScale, newScaleFactor);
+        }
+        else
+        {
+            // If model not loaded, just update the internal state for the *next* load (via Start)
+            // This part might be redundant now but doesn't hurt
+            this.useManualScaling = (index != 0);
+             switch(index)
+            {
+                case 1: this.manualScaleFactor = 0.0001f; break; //mm
+                case 2: this.manualScaleFactor = 0.1f; break; //m
+                case 3: this.manualScaleFactor = 0.03048f; break; //ft
+                case 4: this.manualScaleFactor = 0.00254f; break; //in
+                default: this.manualScaleFactor = 1.0f; break; // Autodetect or unknown
+            }
+             Debug.LogWarning($"[OnUnitTypeChanged] Called but model is null. Updated internal state: useManual={useManualScaling}, factor={manualScaleFactor}");
         }
     }
 
@@ -709,6 +740,35 @@ public class OpenFile : MonoBehaviour
         if (materialMapperUI != null)
         {
             materialMapperUI.OnMappingsConfirmed -= HandleMaterialMappings;
+        }
+    }
+
+    // Helper function to get scaling factors based on current dropdown value
+    private void DetermineInitialScale(out bool isManual, out float scaleFactor)
+    {
+        int currentIndex = (unitDropdown != null) ? unitDropdown.value : 0; // Default to Autodetect if no dropdown
+        isManual = (currentIndex != 0);
+        
+        switch(currentIndex)
+        {
+            // case 0: // Autodetect - scaleFactor remains 1.0f, isManual is false
+            //     scaleFactor = 1.0f; 
+            //     break; 
+            case 1: // Metric-millimeters
+                scaleFactor = 0.001f;
+                break;
+            case 2: // Metric-meters
+                scaleFactor = 1.0f;
+                break;
+            case 3: // Imperial-feet
+                scaleFactor = 0.3048f;
+                break;
+            case 4: // Imperial-inches
+                scaleFactor = 0.0254f;
+                break;
+            default: // Includes Autodetect (index 0)
+                scaleFactor = 1.0f; // Default factor for auto-detect case
+                break;
         }
     }
 }
