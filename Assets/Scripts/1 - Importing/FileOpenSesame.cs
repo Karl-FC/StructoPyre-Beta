@@ -146,6 +146,10 @@ public class OpenFile : MonoBehaviour
         }
 
         OBJLoader loader = new OBJLoader();
+        // Set the split mode to Object (or Group if Object isn't available)
+        loader.SplitMode = Dummiesman.SplitMode.Object;
+        Debug.Log($"OBJLoader SplitMode set to: {loader.SplitMode}");
+
         if (mtlStream != null)
         {
             model = loader.Load(objStream, mtlStream);
@@ -186,27 +190,32 @@ public class OpenFile : MonoBehaviour
         // --- START MATERIAL MAPPING ---
         if (materialMapperUI != null)
         {
-            List<string> materialNames = new List<string>();
+            HashSet<string> uniqueMaterialNames = new HashSet<string>(); // Use HashSet for uniqueness
             if (model != null)
             {
-                // Collect material names from child GameObjects (since SplitMode = Material)
-                foreach (Transform child in model.transform)
+                // Find all MeshRenderers in the loaded hierarchy
+                MeshRenderer[] renderers = model.GetComponentsInChildren<MeshRenderer>(true); // Include inactive
+
+                foreach (MeshRenderer renderer in renderers)
                 {
-                    // Check if the child has a renderer, indicating it's likely a material part
-                    if (child.GetComponent<MeshRenderer>() != null)
+                    // Get the materials used by this renderer
+                    foreach (Material mat in renderer.sharedMaterials) // Use sharedMaterials to get original names
                     {
-                         materialNames.Add(child.name);
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"Child object {child.name} skipped, no MeshRenderer found.");
+                        if (mat != null)
+                        {
+                            // Material names might have " (Instance)" appended, try to get the base name
+                            string baseName = mat.name.Replace(" (Instance)", "").Trim();
+                            uniqueMaterialNames.Add(baseName);
+                        }
                     }
                 }
             }
 
+            List<string> materialNames = new List<string>(uniqueMaterialNames); // Convert HashSet to List
+
             if (materialNames.Count > 0)
             {
-                Debug.Log($"Found materials to map: {string.Join(", ", materialNames)}");
+                Debug.Log($"Found unique materials to map: {string.Join(", ", materialNames)}");
 
                 // Subscribe to the confirmation event (unsubscribe first to prevent duplicates)
                 materialMapperUI.OnMappingsConfirmed -= HandleMaterialMappings; // Use '-=' first
@@ -307,6 +316,10 @@ public class OpenFile : MonoBehaviour
         }
 
         OBJLoader loader = new OBJLoader();
+        // Set the split mode to Object (or Group if Object isn't available)
+        loader.SplitMode = Dummiesman.SplitMode.Object;
+        Debug.Log($"OBJLoader SplitMode set to: {loader.SplitMode}");
+
         if (mtlStream != null)
         {
             model = loader.Load(objStream, mtlStream);
@@ -347,27 +360,32 @@ public class OpenFile : MonoBehaviour
         // --- START MATERIAL MAPPING ---
         if (materialMapperUI != null)
         {
-            List<string> materialNames = new List<string>();
+            HashSet<string> uniqueMaterialNames = new HashSet<string>(); // Use HashSet for uniqueness
             if (model != null)
             {
-                // Collect material names from child GameObjects (since SplitMode = Material)
-                foreach (Transform child in model.transform)
+                // Find all MeshRenderers in the loaded hierarchy
+                MeshRenderer[] renderers = model.GetComponentsInChildren<MeshRenderer>(true); // Include inactive
+
+                foreach (MeshRenderer renderer in renderers)
                 {
-                    // Check if the child has a renderer, indicating it's likely a material part
-                    if (child.GetComponent<MeshRenderer>() != null)
+                    // Get the materials used by this renderer
+                    foreach (Material mat in renderer.sharedMaterials) // Use sharedMaterials to get original names
                     {
-                         materialNames.Add(child.name);
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"Child object {child.name} skipped, no MeshRenderer found.");
+                        if (mat != null)
+                        {
+                            // Material names might have " (Instance)" appended, try to get the base name
+                            string baseName = mat.name.Replace(" (Instance)", "").Trim();
+                            uniqueMaterialNames.Add(baseName);
+                        }
                     }
                 }
             }
 
+            List<string> materialNames = new List<string>(uniqueMaterialNames); // Convert HashSet to List
+
             if (materialNames.Count > 0)
             {
-                Debug.Log($"Found materials to map: {string.Join(", ", materialNames)}");
+                Debug.Log($"Found unique materials to map: {string.Join(", ", materialNames)}");
 
                 // Subscribe to the confirmation event (unsubscribe first to prevent duplicates)
                 materialMapperUI.OnMappingsConfirmed -= HandleMaterialMappings; // Use '-=' first
@@ -630,59 +648,71 @@ public class OpenFile : MonoBehaviour
 
         if (model != null)
         {
+            // Iterate through the child OBJECTS (Columns, Slabs, etc.)
             foreach (Transform child in model.transform)
             {
-                // Check if this child's name exists in the mapping dictionary
-                if (materialMappings.TryGetValue(child.name, out AggregateType realMaterial))
+                MeshRenderer renderer = child.GetComponent<MeshRenderer>();
+                if (renderer == null)
                 {
-                    if (realMaterial != null)
+                    Debug.LogWarning($"Child object '{child.name}' has no MeshRenderer, skipping material property assignment.");
+                    continue; // Skip if no renderer
+                }
+
+                AggregateType mappedAggregateType = null;
+                string originalMaterialName = "Unknown";
+
+                // Find the first material on this renderer that has a mapping
+                foreach (Material mat in renderer.sharedMaterials)
+                {
+                    if (mat != null)
                     {
-                        // Add or get the component to store the mapped material
-                        MaterialProperties materialProps = child.gameObject.GetComponent<MaterialProperties>();
-                        if (materialProps == null) // Add if it doesn't exist
+                        string baseName = mat.name.Replace(" (Instance)", "").Trim();
+                        if (materialMappings.TryGetValue(baseName, out AggregateType foundMapping))
                         {
-                            materialProps = child.gameObject.AddComponent<MaterialProperties>();
+                            mappedAggregateType = foundMapping;
+                            originalMaterialName = baseName; // Store the name of the material that triggered the mapping
+                            break; // Found a mapping for this object, use it and stop checking materials
                         }
-                        materialProps.realMaterial = realMaterial; // Assign the ScriptableObject
-
-                        // Determine the input unit system based on the dropdown selection
-                        UnitSystem selectedUnitSystem = UnitSystem.Imperial; // Default to Imperial if autodetect
-                        if (unitDropdown != null)
-                        {
-                            // Dropdown indices: 0=Autodetect, 1=mm, 2=m, 3=ft, 4=in
-                            if (unitDropdown.value == 1 || unitDropdown.value == 2)
-                            {
-                                selectedUnitSystem = UnitSystem.Metric;
-                            }
-                            else if (unitDropdown.value == 3 || unitDropdown.value == 4)
-                            {
-                                selectedUnitSystem = UnitSystem.Imperial;
-                            }
-                            // If value is 0 (Autodetect), we'll stick with the default Imperial assumption for the *source* of these ACI defaults.
-                        }
-                        materialProps.inputUnitSystem = selectedUnitSystem;
-
-                        // MVP: Set default ACI values (converted to meters for internal storage)
-                        // Defaulting to values corresponding to an Imperial input (1.5 inches, 6.0 inches)
-                        float inchesToMeters = 0.0254f;
-                        materialProps.elementType = AciElementType.Slab;
-                        materialProps.restraint = AciRestraint.Unrestrained;
-                        materialProps.prestress = AciPrestress.Nonprestressed;
-                        materialProps.actualCover_u = 1.5f * inchesToMeters; // 1.5 inches converted to meters
-                        materialProps.actualEquivalentThickness_te = 6.0f * inchesToMeters; // 6.0 inches converted to meters
-                        // actualLeastDimension, steelShape, actualProtectionThickness_h can be left at their defaults for now or set based on element type assumption
-
-                        Debug.Log($"Applied '{realMaterial.realmaterialName}' properties to '{child.name}'");
                     }
-                    else
+                }
+
+                // If a mapping was found for any material on this object
+                if (mappedAggregateType != null)
+                {
+                    // Add or get the MaterialProperties component on the CHILD OBJECT
+                    MaterialProperties materialProps = child.gameObject.GetComponent<MaterialProperties>();
+                    if (materialProps == null) // Add if it doesn't exist
                     {
-                         Debug.LogWarning($"Mapping for '{child.name}' resulted in a null AggregateType.");
+                        materialProps = child.gameObject.AddComponent<MaterialProperties>();
                     }
+                    materialProps.realMaterial = mappedAggregateType; // Assign the mapped ScriptableObject
+
+                    // Determine the input unit system (existing logic)
+                    UnitSystem selectedUnitSystem = UnitSystem.Imperial; // Default
+                    if (unitDropdown != null)
+                    {
+                        if (unitDropdown.value == 1 || unitDropdown.value == 2) selectedUnitSystem = UnitSystem.Metric;
+                        else if (unitDropdown.value == 3 || unitDropdown.value == 4) selectedUnitSystem = UnitSystem.Imperial;
+                    }
+                    materialProps.inputUnitSystem = selectedUnitSystem;
+
+                    // Set default ACI values (existing logic - BUT elementType should be defaulted)
+                    float inchesToMeters = 0.0254f;
+                    // *** Default elementType - User will override via Inspector later ***
+                    materialProps.elementType = AciElementType.Other; // Default to 'Other' or 'Slab'
+                    materialProps.restraint = AciRestraint.Unrestrained;
+                    materialProps.prestress = AciPrestress.Nonprestressed;
+                    materialProps.actualCover_u = 1.5f * inchesToMeters; // Default
+                    materialProps.actualEquivalentThickness_te = 6.0f * inchesToMeters; // Default
+
+                    Debug.Log($"Applied mapping based on material '{originalMaterialName}' to object '{child.name}'. Mapped to '{mappedAggregateType.realmaterialName}'. ElementType defaulted to {materialProps.elementType}.");
                 }
                 else
                 {
-                    Debug.LogWarning($"No mapping found for imported material/object: '{child.name}'");
-                    // Optionally add a default MaterialProperties component or handle as needed
+                    Debug.LogWarning($"No material mapping found for any materials on object: '{child.name}'. It will not have MaterialProperties.");
+                    // Optionally destroy existing MaterialProperties if re-mapping
+                    MaterialProperties existingProps = child.GetComponent<MaterialProperties>();
+                    if (existingProps != null) Destroy(existingProps);
                 }
             }
         }

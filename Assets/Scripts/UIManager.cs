@@ -55,7 +55,7 @@ public class UIManager : MonoBehaviour
 
         // Set initial visual state based on component defaults
         if (faceInspector != null && inspectorModeButton != null)
-            SetButtonColor(inspectorModeButton, faceInspector.gameObject.activeSelf); // Assuming FaceInspector starts enabled/disabled via its GameObject or internal flag
+            SetButtonColor(inspectorModeButton, faceInspector.IsInspectorCurrentlyActive);
         if (simulationControlsPanel != null && simulatorModeButton != null)
             SetButtonColor(simulatorModeButton, simulationControlsPanel.activeSelf);
     }
