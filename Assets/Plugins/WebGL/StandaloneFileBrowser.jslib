@@ -9,9 +9,9 @@ var StandaloneFileBrowserWebGLPlugin = {
     //     Custom: ".plist, .xml, .yaml"
     // multiselect: Allows multiple file selection
     UploadFile: function(gameObjectNamePtr, methodNamePtr, filterPtr, multiselect) {
-        gameObjectName = Pointer_stringify(gameObjectNamePtr);
-        methodName = Pointer_stringify(methodNamePtr);
-        filter = Pointer_stringify(filterPtr);
+        gameObjectName = UTF8ToString(gameObjectNamePtr);
+        methodName = UTF8ToString(methodNamePtr);
+        filter = UTF8ToString(filterPtr);
 
         // Delete if element exist
         var fileInput = document.getElementById(gameObjectName)
@@ -35,16 +35,24 @@ var StandaloneFileBrowserWebGLPlugin = {
             this.value = null;
         };
         fileInput.onchange = function (event) {
-            // multiselect works
-            var urls = [];
-            for (var i = 0; i < event.target.files.length; i++) {
-                urls.push(URL.createObjectURL(event.target.files[i]));
-            }
-            // File selected
-            SendMessage(gameObjectName, methodName, urls.join());
+            var files = event.target.files;
+            var fileContents = [];
+            var filesRead = 0;
 
-            // Remove after file selected
-            document.body.removeChild(fileInput);
+            for (var i = 0; i < files.length; i++) {
+                (function(file, idx) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        fileContents[idx] = e.target.result;
+                        filesRead++;
+                        if (filesRead === files.length) {
+                            // All files read, send to Unity
+                            SendMessage(gameObjectName, methodName, fileContents.join('[SPLIT]'));
+                        }
+                    };
+                    reader.readAsText(file);
+                })(files[i], i);
+            }
         }
         document.body.appendChild(fileInput);
 
@@ -62,9 +70,9 @@ var StandaloneFileBrowserWebGLPlugin = {
     // byteArray: byte[]
     // byteArraySize: byte[].Length
     DownloadFile: function(gameObjectNamePtr, methodNamePtr, filenamePtr, byteArray, byteArraySize) {
-        gameObjectName = Pointer_stringify(gameObjectNamePtr);
-        methodName = Pointer_stringify(methodNamePtr);
-        filename = Pointer_stringify(filenamePtr);
+        gameObjectName = UTF8ToString(gameObjectNamePtr);
+        methodName = UTF8ToString(methodNamePtr);
+        filename = UTF8ToString(filenamePtr);
 
         var bytes = new Uint8Array(byteArraySize);
         for (var i = 0; i < byteArraySize; i++) {

@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b039ee6f3fb2a0e47a2023759d6002b7, type: 3}
   m_Name: Conc_siliceous
   m_EditorClassIdentifier: 
-  materialName: Siliceous
+  realmaterialName: Siliceous
   defaultThickness: 0.1
   flammabilityRating: 0.5

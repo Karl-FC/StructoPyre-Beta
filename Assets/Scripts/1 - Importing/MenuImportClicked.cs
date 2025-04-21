@@ -18,8 +18,8 @@ public class MainMenu : MonoBehaviour
     // Visible muna yun background, buttons at cursor. Yun DPad hindi pa
     private void Awake()
     {
-        MainMenuGUI.SetActive(true);
-        MainMenuBG.SetActive(true);
+        // Only UIManager controls UI panels
+        UIManager.Instance.ShowMainMenu();
         if (UIDpad != null)
         {
             UIDpad.SetActive(GlobalVariables.isDPadEnabled); // initially FALSE
@@ -117,8 +117,8 @@ public class MainMenu : MonoBehaviour
 
     public void DisableMainMenu()
     {
-        MainMenuGUI.SetActive(false);
-        MainMenuBG.SetActive(false);
+        // Only UIManager controls UI panels
+        UIManager.Instance.ShowMaterialMapper();
         HeaderAdjust();
     }
 
