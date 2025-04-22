@@ -101,7 +101,7 @@ public class OpenFile : MonoBehaviour
         DetermineInitialScale(out bool isManual, out float scaleFactor);
         Debug.Log($"[OnClickOpen Standalone] Determined initial scale: isManual={isManual}, factor={scaleFactor}");
 
-        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", new[] { new ExtensionFilter("3D Model Files", "obj", "mtl") }, false);
+        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", new[] { new ExtensionFilter("3D Model Files", "obj") }, false);
         if (paths.Length > 0)
         {
             // Start coroutine, passing the determined scale factors
