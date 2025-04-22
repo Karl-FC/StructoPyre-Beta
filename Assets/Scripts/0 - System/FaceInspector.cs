@@ -22,6 +22,10 @@ public class FaceInspector : MonoBehaviour
     // Public getter for the internal state
     public bool IsInspectorCurrentlyActive => isInspectorActive;
 
+    // Add a property to access the currently inspected MaterialProperties
+    private MaterialProperties currentlyInspectedProperties;
+    public MaterialProperties CurrentlyInspectedProperties => currentlyInspectedProperties;
+
     void Start()
     {
         mainCamera = GetComponent<Camera>();
@@ -68,32 +72,23 @@ public class FaceInspector : MonoBehaviour
 
     void Update()
     {
-        // Raycast logic only runs if inspector mode is active
-        if (isInspectorActive && mainCamera != null)
-        {
-            PerformRaycast();
-        }
+        // Only run if inspector mode is active
+        if (!isInspectorActive || mainCamera == null || inspectionTextUI == null) return;
 
-        // Update visual even if inspector text isn't active, based on toggle
-        if (showRaycastVisual && lineRenderer != null)
-        {
-             UpdateLaserPointer();
-        }
-        else if (lineRenderer != null && lineRenderer.enabled)
-        {
-            lineRenderer.enabled = false; // Ensure it's off if toggled off
-        }
-    }
-
-    void PerformRaycast()
-    {
         Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
         RaycastHit hit;
+
+        // Perform the raycast, now using the LayerMask
         bool didHit = Physics.Raycast(ray, out hit, maxRayDistance, inspectLayerMask);
 
         if (didHit)
         {
+            // Try to get MaterialProperties from the hit object
             MaterialProperties props = hit.collider.GetComponent<MaterialProperties>();
+            
+            // Store the reference to the current properties being inspected
+            currentlyInspectedProperties = props;
+
             if (props != null && props.realMaterial != null)
             {
                 if (inspectionTextUI != null) inspectionTextUI.text = $"Looking at: {props.realMaterial.realmaterialName}\n" +
@@ -109,7 +104,19 @@ public class FaceInspector : MonoBehaviour
         }
         else
         {
+            // Ray didn't hit anything within range
+            currentlyInspectedProperties = null; // Clear the reference
             if (inspectionTextUI != null) inspectionTextUI.text = ""; // Clear the text
+        }
+
+        // Update visual even if inspector text isn't active, based on toggle
+        if (showRaycastVisual && lineRenderer != null)
+        {
+             UpdateLaserPointer();
+        }
+        else if (lineRenderer != null && lineRenderer.enabled)
+        {
+            lineRenderer.enabled = false; // Ensure it's off if toggled off
         }
     }
 
@@ -141,10 +148,15 @@ public class FaceInspector : MonoBehaviour
     public void SetInspectorActive(bool isActive)
     {
         isInspectorActive = isActive;
-        if (!isActive && inspectionTextUI != null)
+        if (!isActive)
         {
-            inspectionTextUI.text = ""; // Clear text when deactivated
+            if (inspectionTextUI != null)
+            {
+                inspectionTextUI.text = ""; // Clear text when deactivated
+            }
+            currentlyInspectedProperties = null; // Clear the reference when deactivated
         }
+        Debug.Log($"Inspector Mode Active: {isInspectorActive}"); // Optional debug log
         // Visual update is handled in Update based on showRaycastVisual flag
     }
 

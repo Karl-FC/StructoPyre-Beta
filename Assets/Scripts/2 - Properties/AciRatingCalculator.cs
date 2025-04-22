@@ -19,32 +19,32 @@ public static class AciRatingCalculator
         float actualCover_u_mm = props.actualCover_u * METERS_TO_MM;
         float actualEquivalentThickness_te_mm = props.actualEquivalentThickness_te * METERS_TO_MM;
         float actualLeastDimension_mm = props.actualLeastDimension * METERS_TO_MM;
-        float actualProtectionThickness_h_mm = props.actualProtectionThickness_h * METERS_TO_MM;
         AciAggregateCategory aggCategory = props.realMaterial.aggregateCategory;
-        AciAggregateCategory protectionAggCategory = props.protectionMaterial?.aggregateCategory ?? AciAggregateCategory.Unknown; // Handle null protectionMaterial
 
-        // TODO: Get Beam Width and Steel Area if needed, potentially from user input or defaults
+        // Get Beam Width (using least dimension as proxy for now)
+        float beamWidth_mm = actualLeastDimension_mm; // <<< Using least dimension proxy
 
         switch (props.elementType)
         {
             case AciElementType.Slab:
-            case AciElementType.Wall: // Treat walls and slabs similarly for thickness check
-                // Primarily use thickness (Table 4.2), but could also check cover (Table 4.3.1.1) if relevant for slabs
+                // Could use WallSlab thickness OR specific Slab cover check. Thickness is simpler for now.
+                // If implementing Slab Cover (Table 4.3.1.1), it would look similar to Beam Cover logic.
+                return CalculateRating_WallSlab_Thickness(actualEquivalentThickness_te_mm, aggCategory);
+            case AciElementType.Wall:
                 return CalculateRating_WallSlab_Thickness(actualEquivalentThickness_te_mm, aggCategory);
 
-            // case AciElementType.Beam: // Needs further split for prestressed/nonprestressed
-            //     return CalculateRating_Beam_Cover(actualCover_u_mm, props.restraint, props.prestress, aggCategory /*, beamWidth, steelArea*/);
+            case AciElementType.Beam:
+                // Using Nonprestressed Beam Cover check (Table 4.3.1.2)
+                // Passing aggregate category, although this specific table doesn't use it directly.
+                return CalculateRating_Beam_Cover_Nonprestressed(actualCover_u_mm, beamWidth_mm, props.restraint, aggCategory);
 
             case AciElementType.ConcreteColumn:
                  return CalculateRating_ConcreteColumn_Dimension(actualLeastDimension_mm, aggCategory, props.columnFireExposure);
 
-            // case AciElementType.ProtectedSteelColumn:
-            //     return CalculateRating_ProtectedSteelColumn_Thickness(actualProtectionThickness_h_mm, protectionAggCategory, props.steelShape /*, config*/);
-
             case AciElementType.Other:
             default:
-                Debug.LogWarning($"Rating calculation not implemented for element type: {props.elementType}");
-                return 0f; // No rating calculated for 'Other' or unhandled types
+                Debug.LogWarning($"Rating calculation not explicitly implemented for element type: {props.elementType}. Returning 0.");
+                return 0f;
         }
     }
 
@@ -53,12 +53,12 @@ public static class AciRatingCalculator
     // Based on ACI 216.1M-14 Table 4.2 - Equivalent Thickness for Walls/Slabs/Roofs
     private static float CalculateRating_WallSlab_Thickness(float actualTe_mm, AciAggregateCategory aggCategory)
     {
-        // Simplified Table 4.2 Data (Thickness in mm for ratings 1, 1.5, 2, 3, 4 hours)
-        // Add more rows if needed (e.g., sand-lightweight)
+        // Table 4.2 Data (Thickness in mm for ratings 1, 1.5, 2, 3, 4 hours)
         float[] ratings = { 1f, 1.5f, 2f, 3f, 4f };
         float[] reqTe_Siliceous = { 90f, 105f, 125f, 155f, 180f };
         float[] reqTe_Carbonate = { 80f, 95f, 105f, 130f, 150f };
-        float[] reqTe_SemiLight = { 65f, 80f, 90f, 110f, 125f }; // Assuming "Semi-lightweight" maps here
+        // Assuming "Semi-lightweight" maps to sand-lightweight values from full table
+        float[] reqTe_SemiLight = { 65f, 80f, 90f, 110f, 125f }; 
         float[] reqTe_Lightweight = { 55f, 65f, 75f, 90f, 105f };
 
         float[] reqTe;
@@ -69,32 +69,70 @@ public static class AciRatingCalculator
             case AciAggregateCategory.SemiLightweight: reqTe = reqTe_SemiLight; break;
             case AciAggregateCategory.Lightweight: reqTe = reqTe_Lightweight; break;
             default:
-                Debug.LogWarning($"Unknown aggregate category for Table 4.2 lookup: {aggCategory}");
+                Debug.LogWarning($"CalculateRating_WallSlab_Thickness: Unknown aggregate category: {aggCategory}");
                 return 0f;
         }
-
         return InterpolateRating(actualTe_mm, reqTe, ratings);
     }
 
-    // TODO: Implement CalculateRating_Beam_Cover (using Tables 4.3.1.1, 4.3.1.2, 4.3.1.3a/b)
-    // This will be more complex due to restraint, prestressing, beam width/area factors.
+    // Based on ACI 216.1M-14 Table 4.3.1.2 - Cover for Nonprestressed Beams
+    private static float CalculateRating_Beam_Cover_Nonprestressed(float actualCover_mm, float beamWidth_mm, AciRestraint restraint, AciAggregateCategory aggCategory) // Added aggCategory for potential future use
+    {
+        // Table 4.3.1.2 Data (Cover in mm for ratings 1, 1.5, 2, 3, 4 hours)
+        // Ratings are the same for all rows
+        float[] ratings = { 1f, 1.5f, 2f, 3f, 4f };
+
+        // Required Cover (mm) Arrays based on Width (W) and Restraint (R)
+        // W < 180mm
+        float[] reqCover_WLess180_RRestrained   = { 20f, 20f, 20f, 20f, 20f };
+        float[] reqCover_WLess180_RUnrestrained = { 20f, 20f, 25f, 30f, 35f }; // From excerpt
+        // 180mm <= W < 250mm
+        float[] reqCover_W180_250_RRestrained   = { 20f, 20f, 20f, 20f, 20f };
+        float[] reqCover_W180_250_RUnrestrained = { 20f, 20f, 20f, 25f, 30f }; // From excerpt
+        // W >= 250mm
+        float[] reqCover_WOver250_RRestrained   = { 20f, 20f, 20f, 20f, 20f };
+        float[] reqCover_WOver250_RUnrestrained = { 20f, 20f, 20f, 20f, 25f }; // From excerpt
+
+        float[] reqCover;
+
+        // Select cover array based on width and restraint
+        if (beamWidth_mm < 180f)
+        {
+            reqCover = (restraint == AciRestraint.Restrained) ? reqCover_WLess180_RRestrained : reqCover_WLess180_RUnrestrained;
+        }
+        else if (beamWidth_mm < 250f)
+        {
+             reqCover = (restraint == AciRestraint.Restrained) ? reqCover_W180_250_RRestrained : reqCover_W180_250_RUnrestrained;
+        }
+        else // beamWidth_mm >= 250f
+        {
+            reqCover = (restraint == AciRestraint.Restrained) ? reqCover_WOver250_RRestrained : reqCover_WOver250_RUnrestrained;
+        }
+
+        if (restraint == AciRestraint.NotApplicable)
+        {
+            Debug.LogWarning("CalculateRating_Beam_Cover_Nonprestressed: Restraint is NotApplicable. Cannot determine rating. Returning 0.");
+            return 0f;
+        }
+
+        // Use interpolation helper
+        return InterpolateRating(actualCover_mm, reqCover, ratings);
+    }
+
 
     // Based on ACI 216.1M-14 Table 4.5.1a/b - Least Dimension for Concrete Columns
     private static float CalculateRating_ConcreteColumn_Dimension(float actualDim_mm, AciAggregateCategory aggCategory, AciColumnFireExposure exposure)
     {
-        // Simplified Table 4.5.1a/b Data (Least Dimension in mm for ratings 1, 1.5, 2, 3, 4 hours)
-        // Note: Table 4.5.1b (Parallel Sides) has same values as 4.5.1a in the standard excerpt
+        // Table 4.5.1a/b Data (Least Dimension in mm for ratings 1, 1.5, 2, 3, 4 hours)
         float[] ratings = { 1f, 1.5f, 2f, 3f, 4f };
         float[] reqDim_Siliceous = { 200f, 230f, 250f, 300f, 350f };
         float[] reqDim_Carbonate = { 200f, 230f, 250f, 300f, 350f }; // Same as Siliceous in table
         float[] reqDim_SemiLight = { 180f, 200f, 215f, 250f, 300f };
         float[] reqDim_Lightweight = { 165f, 190f, 215f, 250f, 300f }; // Sand-Lightweight values used
 
-        // For this table, exposure doesn't change the values based on the provided ACI excerpt tables 4.5.1a/b
-        // If more detailed tables distinguish, add logic here.
         if (exposure == AciColumnFireExposure.Other)
         {
-             Debug.LogWarning("Column fire exposure 'Other' not specifically handled by Tables 4.5.1a/b, using FourSides data.");
+             Debug.LogWarning("CalculateRating_ConcreteColumn_Dimension: Column fire exposure 'Other' not specifically handled by Tables 4.5.1a/b, using FourSides/Table 4.5.1a data.");
         }
 
         float[] reqDim;
@@ -102,19 +140,14 @@ public static class AciRatingCalculator
         {
             case AciAggregateCategory.Siliceous: reqDim = reqDim_Siliceous; break;
             case AciAggregateCategory.Carbonate: reqDim = reqDim_Carbonate; break;
-            case AciAggregateCategory.SemiLightweight: reqDim = reqDim_SemiLight; break; // Mapping SemiLightweight
-            case AciAggregateCategory.Lightweight: reqDim = reqDim_Lightweight; break; // Mapping Lightweight
+            case AciAggregateCategory.SemiLightweight: reqDim = reqDim_SemiLight; break;
+            case AciAggregateCategory.Lightweight: reqDim = reqDim_Lightweight; break;
             default:
-                Debug.LogWarning($"Unknown aggregate category for Table 4.5.1 lookup: {aggCategory}");
+                Debug.LogWarning($"CalculateRating_ConcreteColumn_Dimension: Unknown aggregate category: {aggCategory}");
                 return 0f;
         }
-
         return InterpolateRating(actualDim_mm, reqDim, ratings);
     }
-
-
-    // TODO: Implement CalculateRating_ProtectedSteelColumn_Thickness (using Tables 4.6a-d)
-    // Requires steel shape, protection material, and configuration details.
 
 
     // --- Helper Methods ---
