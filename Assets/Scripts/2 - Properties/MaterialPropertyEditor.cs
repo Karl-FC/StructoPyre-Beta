@@ -41,11 +41,9 @@ public class MaterialPropertyEditor : MonoBehaviour
     private void OnEnable()
     {
         Debug.Log("MaterialPropertyEditor: OnEnable() called.");
-        // Find the action in the "Cross Platform" map
         openEditorAction = controls.CrossPlatform.OpenPropertyEditor;
         if (openEditorAction != null)
         {
-            openEditorAction.Enable();
             openEditorAction.performed += OnOpenEditorInput;
             Debug.Log("MaterialPropertyEditor: Subscribed to CrossPlatform/OpenPropertyEditor action.");
         }
@@ -54,9 +52,6 @@ public class MaterialPropertyEditor : MonoBehaviour
             Debug.LogError("Could not find 'OpenPropertyEditor' action in 'Cross Platform' map. Did you add it and save the Input Actions asset?");
         }
 
-        // CRITICAL CHECK: Let's see if the map itself is enabled somewhere else
-        // Explicitly enable the Cross Platform map here for simplicity, 
-        // assuming this script is the primary user of this map for this specific action.
         controls.CrossPlatform.Enable(); 
         Debug.Log($"MaterialPropertyEditor: Cross Platform Action Map Enabled State: {controls.CrossPlatform.enabled}"); 
     }
@@ -67,12 +62,8 @@ public class MaterialPropertyEditor : MonoBehaviour
         if (openEditorAction != null)
         {
             openEditorAction.performed -= OnOpenEditorInput;
-            openEditorAction.Disable();
             Debug.Log("MaterialPropertyEditor: Unsubscribed from CrossPlatform/OpenPropertyEditor action.");
         }
-        // Disable the map when this object is disabled, IF this script is solely responsible for enabling it.
-        // If other scripts use CrossPlatform map, disabling it here might break them.
-        // Consider a central input manager if multiple scripts use the same map.
         controls.CrossPlatform.Disable(); 
     }
 
