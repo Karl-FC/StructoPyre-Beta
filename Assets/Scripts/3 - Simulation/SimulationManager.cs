@@ -9,7 +9,7 @@ public class SimulationManager : MonoBehaviour
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI stateText;
 
-    // Optional: Cache found components for performance if reset is frequent
+    // Optional: Cache found components for performance if reset is frequent heh
     // private FireIntegrityTracker[] trackers;
     // private IntegrityVisualizer[] visualizers;
 
