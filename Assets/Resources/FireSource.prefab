@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3683077236369498666}
   - component: {fileID: 2924520762566387846}
   - component: {fileID: 6023369264410953412}
+  - component: {fileID: -6565104318457899858}
   m_Layer: 0
   m_Name: FireSource
   m_TagString: Untagged
@@ -108,3 +109,20 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-6565104318457899858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4581949424451836833}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a81a91f35337b604ab0b54dee3cdcdc1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  exposureRadius: 5
+  structuralLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  checkInterval: 0.5

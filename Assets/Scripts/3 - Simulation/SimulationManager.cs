@@ -9,6 +9,14 @@ public class SimulationManager : MonoBehaviour
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI stateText;
 
+    // Optional: Cache found components for performance if reset is frequent heh
+    // private FireIntegrityTracker[] trackers;
+    // private IntegrityVisualizer[] visualizers;
+
+    // void Start() {
+    //     FindSimulationComponents();
+    // }
+
     void Update()
     {
         if (currentState == SimulationState.Running)
@@ -27,6 +35,8 @@ public class SimulationManager : MonoBehaviour
 
     public void StartSimulation()
     {
+        // Ensure components are found before starting if not cached
+        // FindSimulationComponents(); 
         currentState = SimulationState.Running;
         Debug.Log("Simulation Started");
     }
@@ -41,8 +51,32 @@ public class SimulationManager : MonoBehaviour
     {
         currentState = SimulationState.Stopped;
         simulationTimeSeconds = 0f;
-        Debug.Log("Simulation Reset");
+        Debug.Log("Simulation Resetting...");
+
+        // Find all trackers and reset their state
+        FireIntegrityTracker[] trackers = FindObjectsOfType<FireIntegrityTracker>();
+        foreach (FireIntegrityTracker tracker in trackers)
+        {
+            tracker.ResetState();
+        }
+        
+        // Find all visualizers and reset their appearance
+        IntegrityVisualizer[] visualizers = FindObjectsOfType<IntegrityVisualizer>();
+        foreach (IntegrityVisualizer visualizer in visualizers)
+        {
+            visualizer.ResetVisuals();
+        }
+
+        Debug.Log($"Simulation Reset Complete. Reset {trackers.Length} trackers and {visualizers.Length} visualizers.");
     }
+
+    // Optional: Method to find and cache components
+    // void FindSimulationComponents()
+    // {
+    //     trackers = FindObjectsOfType<FireIntegrityTracker>();
+    //     visualizers = FindObjectsOfType<IntegrityVisualizer>();
+    //     Debug.Log($"Found {trackers.Length} trackers and {visualizers.Length} visualizers.");
+    // }
 
     string FormatTime(float seconds)
     {

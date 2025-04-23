@@ -697,15 +697,16 @@ public class OpenFile : MonoBehaviour
                     materialProps.inputUnitSystem = selectedUnitSystem;
 
                     // Set default ACI values (existing logic - BUT elementType should be defaulted)
-                    float inchesToMeters = 0.0254f;
+                    // float inchesToMeters = 0.0254f; // No longer needed for direct metric defaults
                     // *** Default elementType - User will override via Inspector later ***
-                    materialProps.elementType = AciElementType.Slab; // Default to 'Other' or 'Slab'
-                    materialProps.restraint = AciRestraint.Unrestrained;
-                    materialProps.prestress = AciPrestress.Nonprestressed;
-                    materialProps.actualCover_u = 1.5f * inchesToMeters; // Default
-                    materialProps.actualEquivalentThickness_te = 6.0f * inchesToMeters; // Default
+                    materialProps.elementType = AciElementType.Slab; // Default to 'Slab'
+                    materialProps.restraint = AciRestraint.Unrestrained; // Default restraint
+                    materialProps.actualCover_u = 0.025f; // Default: 25mm converted to meters
+                    materialProps.actualEquivalentThickness_te = 0.125f; // Default: 125mm converted to meters
+                    materialProps.actualLeastDimension = 0.300f; // Keep a reasonable default (e.g., 300mm) for columns if needed later
+                    materialProps.columnFireExposure = AciColumnFireExposure.FourSides; // Default exposure
 
-                    Debug.Log($"Applied mapping based on material '{originalMaterialName}' to object '{child.name}'. Mapped to '{mappedAggregateType.realmaterialName}'. ElementType defaulted to {materialProps.elementType}.");
+                    Debug.Log($"Applied mapping based on material '{originalMaterialName}' to object '{child.name}'. Mapped to '{mappedAggregateType.realmaterialName}'. ElementType defaulted to {materialProps.elementType}. Defaults set: Thickness=125mm, Cover=25mm.");
                 }
                 else
                 {
@@ -741,27 +742,45 @@ public class OpenFile : MonoBehaviour
                     if (child.GetComponent<MeshCollider>() == null)
                     {
                         child.gameObject.AddComponent<MeshCollider>();
-                        Debug.Log($"Added MeshCollider to {child.name}");
+                        // Debug.Log($"Added MeshCollider to {child.name}"); // Less verbose log
                     }
 
                     // Set the layer for raycasting
                     string layerName = "InspectableModel"; // Make sure this matches your actual layer name
                     int layerValue = LayerMask.NameToLayer(layerName);
                     child.gameObject.layer = layerValue;
-                    // ADD DEBUG LOG HERE
-                    if (layerValue == -1)
-                        Debug.LogWarning($"Layer '{layerName}' does not exist! Could not set layer for {child.name}.");
-                    else
-                        Debug.Log($"Set layer for {child.name} to {layerValue} ({layerName})");
+                    // // ADD DEBUG LOG HERE (Original comment)
+                    // if (layerValue == -1)
+                    //     Debug.LogWarning($"Layer '{layerName}' does not exist! Could not set layer for {child.name}.");
+                    // else
+                    //     Debug.Log($"Set layer for {child.name} to {layerValue} ({layerName})"); // Less verbose log
 
+                    // Calculate and store the fire rating
                     props.achievedFireResistanceRating = AciRatingCalculator.CalculateRating(props);
-                    // Debug.Log($"Calculated rating for '{child.name}': {props.achievedFireResistanceRating} hours"); // Original log, maybe comment out if too spammy
+                    // Debug.Log($"Calculated rating for '{child.name}': {props.achievedFireResistanceRating} hours"); 
+
+                    // *** ADD SIMULATION COMPONENTS HERE ***
+                    // Add FireIntegrityTracker if it doesn't exist
+                    if (child.GetComponent<FireIntegrityTracker>() == null)
+                    {
+                         child.gameObject.AddComponent<FireIntegrityTracker>();
+                         // Debug.Log($"Added FireIntegrityTracker to {child.name}");
+                    }
+
+                    // Add IntegrityVisualizer if it doesn't exist
+                    if (child.GetComponent<IntegrityVisualizer>() == null)
+                    {
+                        child.gameObject.AddComponent<IntegrityVisualizer>();
+                        // Debug.Log($"Added IntegrityVisualizer to {child.name}");
+                    }
+                    // *** END ADD SIMULATION COMPONENTS ***
                 }
             }
+            Debug.Log("Finalized setup for model children (Colliders, Layers, Ratings, Simulation Components).");
         }
         else
         {
-            Debug.LogWarning("Cannot calculate ratings because model is null during FinalizeModelLoad.");
+            Debug.LogWarning("Cannot finalize model children setup because model is null.");
         }
 
         // Any other final setup steps for the model could go here
