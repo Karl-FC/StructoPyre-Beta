@@ -596,6 +596,15 @@ public class OpenFile : MonoBehaviour
 
     private void OnUnitTypeChanged(int index)
     {
+        // Determine the intended display system FIRST
+        UnitSystem selectedSystem = UnitSystem.Metric; // Default to Metric
+        if (index == 3 || index == 4) // Imperial (Feet or Inches chosen)
+        {
+            selectedSystem = UnitSystem.Imperial;
+        }
+        GlobalVariables.DisplayUnitSystem = selectedSystem;
+        Debug.Log($"[OnUnitTypeChanged] Global Display Unit System set to: {GlobalVariables.DisplayUnitSystem}");
+
         // If a model is loaded, apply the new scale immediately
         if (model != null)
         {
@@ -606,11 +615,11 @@ public class OpenFile : MonoBehaviour
             float newScaleFactor;
             switch(index)
             {
-                case 1: newScaleFactor = 0.001f; break;
-                case 2: newScaleFactor = 1.0f; break;
-                case 3: newScaleFactor = 0.3048f; break;
-                case 4: newScaleFactor = 0.0254f; break;
-                default: isManualScale = false; newScaleFactor = 1.0f; break; // Autodetect or unknown
+                case 1: newScaleFactor = 0.001f; break; // mm
+                case 2: newScaleFactor = 1.0f; break; // m
+                case 3: newScaleFactor = 0.3048f; break; // ft
+                case 4: newScaleFactor = 0.0254f; break; // in
+                default: isManualScale = false; newScaleFactor = 0.0001f; break; // Autodetect or unknown
             }
 
             // Store these potentially for future use IF the listener issue gets fixed
@@ -632,10 +641,10 @@ public class OpenFile : MonoBehaviour
             this.useManualScaling = (index != 0);
              switch(index)
             {
-                case 1: this.manualScaleFactor = 0.0001f; break; //mm
-                case 2: this.manualScaleFactor = 0.1f; break; //m
-                case 3: this.manualScaleFactor = 0.03048f; break; //ft
-                case 4: this.manualScaleFactor = 0.00254f; break; //in
+                case 1: this.manualScaleFactor = 0.001f; break; // mm (Corrected from 0.0001)
+                case 2: this.manualScaleFactor = 1.0f; break; // m (Corrected from 0.1)
+                case 3: this.manualScaleFactor = 0.3048f; break; // ft (Corrected from 0.03048)
+                case 4: this.manualScaleFactor = 0.0254f; break; // in (Corrected from 0.00254)
                 default: this.manualScaleFactor = 1.0f; break; // Autodetect or unknown
             }
              Debug.LogWarning($"[OnUnitTypeChanged] Called but model is null. Updated internal state: useManual={useManualScaling}, factor={manualScaleFactor}");
@@ -687,26 +696,35 @@ public class OpenFile : MonoBehaviour
                     }
                     materialProps.realMaterial = mappedAggregateType; // Assign the mapped ScriptableObject
 
-                    // Determine the input unit system (existing logic)
-                    UnitSystem selectedUnitSystem = UnitSystem.Imperial; // Default
-                    if (unitDropdown != null)
-                    {
-                        if (unitDropdown.value == 1 || unitDropdown.value == 2) selectedUnitSystem = UnitSystem.Metric;
-                        else if (unitDropdown.value == 3 || unitDropdown.value == 4) selectedUnitSystem = UnitSystem.Imperial;
-                    }
-                    materialProps.inputUnitSystem = selectedUnitSystem;
+                    // *** Store the selected input unit system (used for setting defaults below) ***
+                    materialProps.inputUnitSystem = GlobalVariables.DisplayUnitSystem;
 
-                    // Set default ACI values (existing logic - BUT elementType should be defaulted)
-                    // float inchesToMeters = 0.0254f; // No longer needed for direct metric defaults
                     // *** Default elementType - User will override via Inspector later ***
                     materialProps.elementType = AciElementType.Slab; // Default to 'Slab'
                     materialProps.restraint = AciRestraint.Unrestrained; // Default restraint
-                    materialProps.actualCover_u = 0.025f; // Default: 25mm converted to meters
-                    materialProps.actualEquivalentThickness_te = 0.125f; // Default: 125mm converted to meters
-                    materialProps.actualLeastDimension = 0.300f; // Keep a reasonable default (e.g., 300mm) for columns if needed later
                     materialProps.columnFireExposure = AciColumnFireExposure.FourSides; // Default exposure
 
-                    Debug.Log($"Applied mapping based on material '{originalMaterialName}' to object '{child.name}'. Mapped to '{mappedAggregateType.realmaterialName}'. ElementType defaulted to {materialProps.elementType}. Defaults set: Thickness=125mm, Cover=25mm.");
+                    // *** Set Defaults based on selected unit system ***
+                    string defaultCoverStr = "";
+                    string defaultThicknessStr = "";
+                    if (materialProps.inputUnitSystem == UnitSystem.Metric)
+                    {
+                        materialProps.actualCover_u = 0.025f; // 25mm in meters
+                        materialProps.actualEquivalentThickness_te = 0.125f; // 125mm in meters
+                        materialProps.actualLeastDimension = 0.300f; // Default 300mm for columns (metric)
+                        defaultCoverStr = "25mm";
+                        defaultThicknessStr = "125mm";
+                    }
+                    else // Imperial
+                    {
+                        materialProps.actualCover_u = 0.0254f; // 1 inch in meters
+                        materialProps.actualEquivalentThickness_te = 0.127f; // 5 inches in meters
+                        materialProps.actualLeastDimension = 0.3048f; // Default 12 inches for columns (imperial)
+                        defaultCoverStr = "1in";
+                        defaultThicknessStr = "5in";
+                    }
+
+                    Debug.Log($"Applied mapping based on material '{originalMaterialName}' to object '{child.name}'. Mapped to '{mappedAggregateType.realmaterialName}'. ElementType defaulted to {materialProps.elementType}. Defaults set (using {materialProps.inputUnitSystem} system): Thickness={defaultThicknessStr}, Cover={defaultCoverStr}.");
                 }
                 else
                 {
@@ -809,11 +827,21 @@ public class OpenFile : MonoBehaviour
         }
     }
 
-    // Helper function to get scaling factors based on current dropdown value
+    // Helper function to get scaling factors AND set display unit based on current dropdown value
     private void DetermineInitialScale(out bool isManual, out float scaleFactor)
     {
         int currentIndex = (unitDropdown != null) ? unitDropdown.value : 0; // Default to Autodetect if no dropdown
         isManual = (currentIndex != 0);
+
+        // Determine and set the global display unit system
+        UnitSystem selectedSystem = UnitSystem.Metric; // Default to Metric
+        if (currentIndex == 3 || currentIndex == 4) // Imperial (Feet or Inches chosen)
+        {
+            selectedSystem = UnitSystem.Imperial;
+        }
+        // If Autodetect (0), Metric-mm (1), Metric-m (2), keep Metric display
+        GlobalVariables.DisplayUnitSystem = selectedSystem;
+        Debug.Log($"[DetermineInitialScale] Global Display Unit System set to: {GlobalVariables.DisplayUnitSystem}");
         
         switch(currentIndex)
         {
@@ -833,7 +861,7 @@ public class OpenFile : MonoBehaviour
                 scaleFactor = 0.0254f;
                 break;
             default: // Includes Autodetect (index 0)
-                scaleFactor = 1.0f; // Default factor for auto-detect case
+                scaleFactor = 0.0001f; // Default factor for auto-detect case
                 break;
         }
     }
