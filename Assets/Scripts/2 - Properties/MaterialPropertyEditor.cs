@@ -2,13 +2,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
-using UnityEngine.InputSystem; // Required for New Input System
 
 public class MaterialPropertyEditor : MonoBehaviour
 {
-    // ... (Keep existing UI References and fields) ...
+    [Header("UI References")]
     [SerializeField] private GameObject editorPanel;
-    [SerializeField] private FaceInspector faceInspector;
+    [SerializeField] private FaceInspector faceInspector; // MUST be assigned
     [SerializeField] private TMP_Text objectNameText;
     [SerializeField] private TMP_Dropdown elementTypeDropdown;
     [SerializeField] private GameObject parametersSection;
@@ -27,49 +26,26 @@ public class MaterialPropertyEditor : MonoBehaviour
     private MaterialProperties currentTarget;
     private bool isUpdatingUI = false;
 
-    private ControlThings controls; // Reference to the Input Actions asset wrapper
-    private InputAction openEditorAction; // Reference to the specific action
-
-    private void Awake() // Changed from Start to Awake for input setup
+    private void Start() // Changed back to Start from Awake
     {
-        controls = new ControlThings();
-
-        if (editorPanel != null) editorPanel.SetActive(false);
+        // Ensure FaceInspector is assigned
+        if (faceInspector == null)
+        {
+            Debug.LogError("MaterialPropertyEditor requires the FaceInspector reference to be assigned in the Inspector!");
+            this.enabled = false; // Disable if reference is missing
+            return;
+        }
+        
+        // Setup dropdowns and listeners once
         InitializeDropdownsAndListeners();
-    }
-
-    private void OnEnable()
-    {
-        Debug.Log("MaterialPropertyEditor: OnEnable() called.");
-        openEditorAction = controls.CrossPlatform.OpenPropertyEditor;
-        if (openEditorAction != null)
-        {
-            openEditorAction.performed += OnOpenEditorInput;
-            Debug.Log("MaterialPropertyEditor: Subscribed to CrossPlatform/OpenPropertyEditor action.");
-        }
-        else 
-        {
-            Debug.LogError("Could not find 'OpenPropertyEditor' action in 'Cross Platform' map. Did you add it and save the Input Actions asset?");
-        }
-
-        controls.CrossPlatform.Enable(); 
-        Debug.Log($"MaterialPropertyEditor: Cross Platform Action Map Enabled State: {controls.CrossPlatform.enabled}"); 
-    }
-
-    private void OnDisable()
-    {
-        Debug.Log("MaterialPropertyEditor: OnDisable() called.");
-        if (openEditorAction != null)
-        {
-            openEditorAction.performed -= OnOpenEditorInput;
-            Debug.Log("MaterialPropertyEditor: Unsubscribed from CrossPlatform/OpenPropertyEditor action.");
-        }
-        controls.CrossPlatform.Disable(); 
+        
+        // Start with the panel hidden
+        if (editorPanel != null) editorPanel.SetActive(false);
     }
 
     private void InitializeDropdownsAndListeners()
     {
-        // ... (Existing dropdown initialization code remains the same) ...
+        // Initialize dropdowns (options)
         if (elementTypeDropdown != null)
         {
             elementTypeDropdown.ClearOptions();
@@ -85,124 +61,106 @@ public class MaterialPropertyEditor : MonoBehaviour
             columnFireExposureDropdown.ClearOptions();
             columnFireExposureDropdown.AddOptions(new System.Collections.Generic.List<string>(Enum.GetNames(typeof(AciColumnFireExposure))));
         }
-
+        
+        // Add listeners for automatic updates
         elementTypeDropdown?.onValueChanged.AddListener(HandleElementTypeChanged);
         restraintDropdown?.onValueChanged.AddListener(HandleRestraintChanged);
         columnFireExposureDropdown?.onValueChanged.AddListener(HandleFireExposureChanged);
-        actualCoverField?.onEndEdit.AddListener(HandleCoverChanged); 
+        actualCoverField?.onEndEdit.AddListener(HandleCoverChanged);
         actualThicknessField?.onEndEdit.AddListener(HandleThicknessChanged);
         actualLeastDimensionField?.onEndEdit.AddListener(HandleLeastDimensionChanged);
     }
 
     private void Update()
     {
-        // REMOVED: E key check is now handled by Input Action callback (OnOpenEditorInput)
+        // Ensure dependencies are met
+        if (faceInspector == null || editorPanel == null) return;
 
-        // Check for Escape key to close editor (Still using old input for now - consider moving to Input System UI Cancel later)
-        if (Input.GetKeyDown(KeyCode.Escape) && editorPanel != null && editorPanel.activeSelf)
-        {
-            CloseEditor();
-        }
-    }
+        // Check if Inspector Mode is active via the FaceInspector
+        bool inspectorActive = faceInspector.IsInspectorCurrentlyActive;
 
-    // Callback method triggered by the 'OpenPropertyEditor' input action
-    private void OnOpenEditorInput(InputAction.CallbackContext context)
-    {
-        if (faceInspector == null || !faceInspector.IsInspectorCurrentlyActive) return;
-
-        // Close if already open, otherwise try to open
-        if (editorPanel != null && editorPanel.activeSelf)
-        {
-            CloseEditor();
-        }
-        else
+        if (inspectorActive)
         {
             MaterialProperties targetProps = faceInspector.CurrentlyInspectedProperties;
+
+            // Is there a valid target being inspected?
             if (targetProps != null)
             {
-                OpenEditor(targetProps);
+                // If this is a new target or the panel was hidden, show and populate
+                if (currentTarget != targetProps || !editorPanel.activeSelf)
+                {
+                    ShowAndPopulateEditor(targetProps);
+                }
+                // If it's the same target, we could potentially skip repopulating every frame 
+                // unless we suspect external changes, but repopulating is simpler for now.
+                // Re-populate to ensure live data if values change externally (unlikely here but safer)
+                // ShowAndPopulateEditor(targetProps); // Call this if constant refresh needed
             }
-            else
+            else // Inspector active, but no valid target
             {
-                Debug.Log("Cannot open editor: No inspectable object with MaterialProperties is currently being looked at.");
+                // If the panel is currently shown, hide it
+                if (editorPanel.activeSelf)
+                {
+                    HideEditor();
+                }
+            }
+        }
+        else // Inspector Mode is NOT active
+        {
+            // If the panel is currently shown, hide it
+            if (editorPanel.activeSelf)
+            {
+                HideEditor();
             }
         }
     }
 
-    // ... (OpenEditor, CloseEditor, Handler methods, UpdateFieldVisibility, RecalculateRating remain largely the same) ...
-    public void OpenEditor(MaterialProperties target) // (No changes needed inside this method)
+    // Renamed from OpenEditor - populates UI and ensures panel is visible
+    private void ShowAndPopulateEditor(MaterialProperties target)
     {
-        if (target == null || editorPanel == null) return;
+        if (target == null) 
+        {
+            HideEditor();
+            return;
+        }
+        
         currentTarget = target;
-        isUpdatingUI = true;
-        if (objectNameText != null) objectNameText.text = $"Editing: {currentTarget.gameObject.name}";
+        isUpdatingUI = true; // Prevent listeners from firing
+
+        if (objectNameText != null) objectNameText.text = $"Inspecting: {currentTarget.gameObject.name}";
+
+        // Setup the form with current values
         elementTypeDropdown.value = (int)currentTarget.elementType;
         restraintDropdown.value = (int)currentTarget.restraint;
         columnFireExposureDropdown.value = (int)currentTarget.columnFireExposure;
         actualCoverField.text = (currentTarget.actualCover_u * 1000f).ToString("F1");
         actualThicknessField.text = (currentTarget.actualEquivalentThickness_te * 1000f).ToString("F1");
         actualLeastDimensionField.text = (currentTarget.actualLeastDimension * 1000f).ToString("F1");
+
         UpdateFieldVisibility((int)currentTarget.elementType);
-        isUpdatingUI = false;
-        editorPanel.SetActive(true);
+        
+        if (!editorPanel.activeSelf) editorPanel.SetActive(true);
+        
+        isUpdatingUI = false; // Re-enable listeners
     }
 
-    public void CloseEditor() // (No changes needed inside this method)
+    // Renamed from CloseEditor - hides panel and clears target
+    private void HideEditor()
     {
         if (editorPanel != null) editorPanel.SetActive(false);
         currentTarget = null;
     }
-    
-    private void HandleElementTypeChanged(int value) // (No changes needed inside this method)
-    {
-        if (isUpdatingUI || currentTarget == null) return;
-        currentTarget.elementType = (AciElementType)value;
-        UpdateFieldVisibility(value);
-        RecalculateRating("ElementType");
-    }
-    private void HandleRestraintChanged(int value) // (No changes needed inside this method)
-    {
-        if (isUpdatingUI || currentTarget == null) return;
-        currentTarget.restraint = (AciRestraint)value;
-        RecalculateRating("Restraint");
-    }
-    private void HandleFireExposureChanged(int value) // (No changes needed inside this method)
-    {
-        if (isUpdatingUI || currentTarget == null) return;
-        currentTarget.columnFireExposure = (AciColumnFireExposure)value;
-        RecalculateRating("FireExposure");
-    }
-    private void HandleCoverChanged(string value) // (No changes needed inside this method)
-    {
-        if (isUpdatingUI || currentTarget == null) return;
-        if (float.TryParse(value, out float coverValueMm))
-        {
-            currentTarget.actualCover_u = coverValueMm / 1000f;
-            RecalculateRating("Cover");
-        }
-        else { Debug.LogWarning($"Invalid input for Cover: {value}"); }
-    }
-    private void HandleThicknessChanged(string value) // (No changes needed inside this method)
-    {
-        if (isUpdatingUI || currentTarget == null) return;
-        if (float.TryParse(value, out float thicknessValueMm))
-        {
-            currentTarget.actualEquivalentThickness_te = thicknessValueMm / 1000f;
-            RecalculateRating("Thickness");
-        }
-         else { Debug.LogWarning($"Invalid input for Thickness: {value}"); }
-    }
-    private void HandleLeastDimensionChanged(string value) // (No changes needed inside this method)
-    {
-        if (isUpdatingUI || currentTarget == null) return;
-        if (float.TryParse(value, out float dimensionValueMm))
-        {
-            currentTarget.actualLeastDimension = dimensionValueMm / 1000f;
-            RecalculateRating("LeastDimension");
-        }
-         else { Debug.LogWarning($"Invalid input for Least Dimension: {value}"); }
-    }
-    private void UpdateFieldVisibility(int elementTypeIndex) // (No changes needed inside this method)
+
+    // --- Listener Handlers (Remain the same) --- 
+    private void HandleElementTypeChanged(int value) { if (isUpdatingUI || currentTarget == null) return; currentTarget.elementType = (AciElementType)value; UpdateFieldVisibility(value); RecalculateRating("ElementType"); }
+    private void HandleRestraintChanged(int value) { if (isUpdatingUI || currentTarget == null) return; currentTarget.restraint = (AciRestraint)value; RecalculateRating("Restraint"); }
+    private void HandleFireExposureChanged(int value) { if (isUpdatingUI || currentTarget == null) return; currentTarget.columnFireExposure = (AciColumnFireExposure)value; RecalculateRating("FireExposure"); }
+    private void HandleCoverChanged(string value) { if (isUpdatingUI || currentTarget == null) return; if (float.TryParse(value, out float v)) { currentTarget.actualCover_u = v / 1000f; RecalculateRating("Cover"); } }
+    private void HandleThicknessChanged(string value) { if (isUpdatingUI || currentTarget == null) return; if (float.TryParse(value, out float v)) { currentTarget.actualEquivalentThickness_te = v / 1000f; RecalculateRating("Thickness"); } }
+    private void HandleLeastDimensionChanged(string value) { if (isUpdatingUI || currentTarget == null) return; if (float.TryParse(value, out float v)) { currentTarget.actualLeastDimension = v / 1000f; RecalculateRating("LeastDimension"); } }
+
+    // --- Helper Methods (Remain the same) --- 
+    private void UpdateFieldVisibility(int elementTypeIndex)
     {
         AciElementType selectedType = (AciElementType)elementTypeIndex;
         bool isSlab = selectedType == AciElementType.Slab;
@@ -222,7 +180,7 @@ public class MaterialPropertyEditor : MonoBehaviour
         if (leastDimensionSection != null) leastDimensionSection.SetActive(showLeastDimension);
         if (dimensionsSection != null) dimensionsSection.SetActive(showCover || showThickness || showLeastDimension);
     }
-    private void RecalculateRating(string changedProperty = "Unknown") // (No changes needed inside this method)
+    private void RecalculateRating(string changedProperty = "Unknown")
     {
         if (currentTarget == null) return;
         float oldRating = currentTarget.achievedFireResistanceRating;
