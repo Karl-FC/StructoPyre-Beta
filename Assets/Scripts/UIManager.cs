@@ -34,30 +34,30 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
-        // InitUI(); // Optional: Set initial panel visibility
+        InitUI(); // Sets initial state (e.g., main menu visible, others hidden)
 
         // Add listeners for the mode buttons
         if (inspectorModeButton != null)
-            inspectorModeButton.onClick.AddListener(ToggleInspectorMode); // Changed listener
+            inspectorModeButton.onClick.AddListener(ToggleInspectorMode);
         else
             Debug.LogError("Inspector Mode Button not assigned in UIManager.");
 
         if (simulatorModeButton != null)
-            simulatorModeButton.onClick.AddListener(ToggleSimulatorMode); // Changed listener
+            simulatorModeButton.onClick.AddListener(ToggleSimulatorMode);
         else
             Debug.LogError("Simulator Mode Button not assigned in UIManager.");
 
-        // Check if dependencies are assigned!
+        // Check if dependencies are assigned
         if (simulationControlsPanel == null)
              Debug.LogError("Simulation Controls Panel not assigned in UIManager.");
         if (faceInspector == null)
              Debug.LogError("Face Inspector component not assigned in UIManager.");
 
-        // Set initial visual state based on component defaults
+        // Set initial button visuals based on initial state (likely both inactive)
         if (faceInspector != null && inspectorModeButton != null)
-            SetButtonColor(inspectorModeButton, faceInspector.IsInspectorCurrentlyActive);
+            SetButtonColor(inspectorModeButton, false); // Inspector starts inactive
         if (simulationControlsPanel != null && simulatorModeButton != null)
-            SetButtonColor(simulatorModeButton, simulationControlsPanel.activeSelf);
+            SetButtonColor(simulatorModeButton, false); // Sim controls start inactive (hidden by InitUI)
     }
 
     /// <summary>
