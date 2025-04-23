@@ -21,11 +21,11 @@ public class FireSource : MonoBehaviour
 
     void Start()
     {
-        // Find the SimulationManager instance in the scene.
-        simulationManager = FindObjectOfType<SimulationManager>();
+        // Use the singleton instance for more reliable access
+        simulationManager = SimulationManager.Instance;
         if (simulationManager == null)
         {
-            Debug.LogError("FireSource could not find the SimulationManager in the scene!", this);
+            Debug.LogError("FireSource could not find the SimulationManager.Instance!", this);
             this.enabled = false; // Disable component if manager is missing
         }
 
@@ -43,6 +43,8 @@ public class FireSource : MonoBehaviour
         // Only perform checks if the simulation is running
         if (simulationManager.currentState == SimulationManager.SimulationState.Running)
         {
+            // Use the real deltaTime for the check interval as fire spreading is a visual element
+            // and shouldn't be tied to simulation speed
             elapsedTimeSinceCheck += Time.deltaTime;
 
             if (elapsedTimeSinceCheck >= checkInterval)

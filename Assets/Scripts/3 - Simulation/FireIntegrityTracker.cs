@@ -14,12 +14,11 @@ public class FireIntegrityTracker : MonoBehaviour
     {
         materialProperties = GetComponent<MaterialProperties>();
         
-        // Find the SimulationManager instance in the scene. 
-        // Consider a more robust method like a singleton or dependency injection for larger projects.
-        simulationManager = FindObjectOfType<SimulationManager>(); 
+        // Use the singleton instance for more reliable access
+        simulationManager = SimulationManager.Instance;
         if (simulationManager == null)
         {
-            Debug.LogError("FireIntegrityTracker could not find the SimulationManager in the scene!", this);
+            Debug.LogError("FireIntegrityTracker could not find the SimulationManager.Instance!", this);
             this.enabled = false; // Disable component if manager is missing
         }
 
@@ -44,7 +43,9 @@ public class FireIntegrityTracker : MonoBehaviour
             // Check if the rating is valid before proceeding
             if (materialProperties.achievedFireResistanceRating > 0)
             {
-                materialProperties.exposureTimeSeconds += Time.deltaTime;
+                // Use the simulation-specific delta time instead of the global Time.deltaTime
+                // This allows the simulation to run at a different speed than the rest of the game
+                materialProperties.exposureTimeSeconds += simulationManager.simulationDeltaTime;
                 float failureTimeSeconds = materialProperties.achievedFireResistanceRating * 3600f;
 
                 if (materialProperties.exposureTimeSeconds >= failureTimeSeconds)

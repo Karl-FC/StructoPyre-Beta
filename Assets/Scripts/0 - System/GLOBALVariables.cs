@@ -1,4 +1,7 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+
+// Assuming UnitSystem enum is accessible or defined elsewhere (e.g., in MaterialProperties.cs)
 
 public static class GlobalVariables
 {
@@ -20,5 +23,11 @@ public static class GlobalVariables
     public static string ImportedModelPath { get; set; }
     public static GameObject ImportedModel { get; set; }
 
+// Add a variable to store the currently selected UI element
+    public static GameObject selectedUIElement = null;
 
+// Default control scheme
+    public static string currentControlScheme = "Keyboard&Mouse";
+
+    public static UnitSystem DisplayUnitSystem = UnitSystem.Metric; // Default to Metric (millimeters)
 }
