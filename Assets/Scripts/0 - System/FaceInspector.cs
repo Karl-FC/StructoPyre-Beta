@@ -161,14 +161,14 @@ public class FaceInspector : MonoBehaviour
             if (inspectionTextUI != null) inspectionTextUI.text = ""; // Clear the text
         }
 
-        // Update visual even if inspector text isn't active, based on toggle
-        if (showRaycastVisual && lineRenderer != null)
+        // Always show LineRenderer if Inspector Mode is active
+        if (isInspectorActive && showRaycastVisual && lineRenderer != null)
         {
-             UpdateLaserPointer();
+            UpdateLaserPointer();
         }
         else if (lineRenderer != null && lineRenderer.enabled)
         {
-            lineRenderer.enabled = false; // Ensure it's off if toggled off
+            lineRenderer.enabled = false;
         }
     }
 

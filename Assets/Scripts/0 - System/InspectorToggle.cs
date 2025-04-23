@@ -4,8 +4,8 @@ using UnityEngine.InputSystem;
 public class InspectorToggle : MonoBehaviour
 {
     [SerializeField] private FaceInspector faceInspector;
+    [SerializeField] private MaterialPropertyEditor propertyEditor;
     private ControlThings inputActions;
-    private bool inspectorActive = false;
 
     private void Awake()
     {
@@ -14,7 +14,7 @@ public class InspectorToggle : MonoBehaviour
 
     private void OnEnable()
     {
-        inputActions.CrossPlatform.OpenPropertyEditor.performed += OnToggleInspector;
+        inputActions.CrossPlatform.OpenPropertyEditor.performed += OnToggleAction;
         inputActions.CrossPlatform.Enable();
     }
 
@@ -22,18 +22,17 @@ public class InspectorToggle : MonoBehaviour
     {
         if (inputActions != null)
         {
-            inputActions.CrossPlatform.OpenPropertyEditor.performed -= OnToggleInspector;
+            inputActions.CrossPlatform.OpenPropertyEditor.performed -= OnToggleAction;
             inputActions.CrossPlatform.Disable();
             inputActions = null;
         }
     }
 
-    private void OnToggleInspector(InputAction.CallbackContext context)
+    private void OnToggleAction(InputAction.CallbackContext context)
     {
-        inspectorActive = !inspectorActive;
-        if (faceInspector != null)
+        if (propertyEditor != null && faceInspector != null && faceInspector.IsInspectorCurrentlyActive)
         {
-            faceInspector.SetInspectorActive(inspectorActive);
+            propertyEditor.TogglePanel();
         }
     }
 } 

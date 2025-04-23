@@ -6,7 +6,7 @@ using System;
 public class MaterialPropertyEditor : MonoBehaviour
 {
     [Header("UI References")]
-    [SerializeField] private GameObject editorPanel;
+    [SerializeField] public GameObject editorPanel; // Make public or add getter if needed elsewhere
     [SerializeField] private FaceInspector faceInspector; // MUST be assigned
     [SerializeField] private TMP_Text objectNameText;
     [SerializeField] private TMP_Dropdown elementTypeDropdown;
@@ -40,7 +40,7 @@ public class MaterialPropertyEditor : MonoBehaviour
         // Setup dropdowns and listeners once
         InitializeDropdownsAndListeners();
         
-        // Start with the panel hidden
+        // Start with the panel hidden (This should be handled by UIManager now, but setting here is safe)
         if (editorPanel != null) editorPanel.SetActive(false);
     }
 
@@ -79,59 +79,60 @@ public class MaterialPropertyEditor : MonoBehaviour
         materialTypeDropdown?.onValueChanged.AddListener(HandleMaterialTypeChanged);
     }
 
+    // Update only populates if the panel is visible and inspector is active
     private void Update()
     {
-        // Ensure dependencies are met
-        if (faceInspector == null || editorPanel == null) return;
+        if (faceInspector == null || editorPanel == null || !editorPanel.activeSelf)
+        {
+             // If panel is hidden or dependencies missing, ensure currentTarget is cleared
+             // This prevents listeners firing if panel is toggled off then on quickly.
+             // currentTarget = null; // Optional: Consider if needed
+             return;
+        }
 
-        // Check if Inspector Mode is active via the FaceInspector
+        // Panel is visible, check inspector state and target
         bool inspectorActive = faceInspector.IsInspectorCurrentlyActive;
 
         if (inspectorActive)
         {
             MaterialProperties targetProps = faceInspector.CurrentlyInspectedProperties;
 
-            // Is there a valid target being inspected?
-            if (targetProps != null)
+            // If target changed OR panel just became visible, populate
+            if (targetProps != null && currentTarget != targetProps)
             {
-                // If this is a new target or the panel was hidden, show and populate
-                if (currentTarget != targetProps || !editorPanel.activeSelf)
-                {
-                    ShowAndPopulateEditor(targetProps);
-                }
-                // If it's the same target, we could potentially skip repopulating every frame 
-                // unless we suspect external changes, but repopulating is simpler for now.
-                // Re-populate to ensure live data if values change externally (unlikely here but safer)
-                // ShowAndPopulateEditor(targetProps); // Call this if constant refresh needed
+                 PopulateEditorFields(targetProps); // Populate with new target
             }
-            else // Inspector active, but no valid target
+            else if (targetProps == null && currentTarget != null)
             {
-                // If the panel is currently shown, hide it
-                if (editorPanel.activeSelf)
-                {
-                    HideEditor();
-                }
+                 // Inspector active, panel visible, but no target selected (or target lost)
+                 // Keep panel visible (as per user request), but maybe clear fields or show "No target"?
+                 // For now, just clear the internal target reference.
+                 currentTarget = null;
+                 // Optionally clear fields here if desired
+                 // ClearEditorFields();
             }
+            // If targetProps == null and currentTarget == null, do nothing (panel visible, no target)
+            // If targetProps != null and currentTarget == targetProps, do nothing (panel visible, same target)
         }
-        else // Inspector Mode is NOT active
+        else // Inspector Mode is NOT active, but panel is somehow visible? Hide it.
         {
-            // If the panel is currently shown, hide it
-            if (editorPanel.activeSelf)
-            {
-                HideEditor();
-            }
+            // This case should ideally be prevented by the UIManager logic,
+            // but as a safeguard:
+            HideEditor();
         }
     }
 
-    // Renamed from OpenEditor - populates UI and ensures panel is visible
-    private void ShowAndPopulateEditor(MaterialProperties target)
+    // Renamed - just populates fields, doesn't control visibility
+    private void PopulateEditorFields(MaterialProperties target)
     {
-        if (target == null) 
+        if (target == null)
         {
-            HideEditor();
+            // Maybe clear fields or show placeholder text?
+            Debug.LogWarning("PopulateEditorFields called with null target.");
+             currentTarget = null; // Ensure internal target is cleared
             return;
         }
-        
+
         currentTarget = target;
         isUpdatingUI = true; // Prevent listeners from firing
 
@@ -146,30 +147,69 @@ public class MaterialPropertyEditor : MonoBehaviour
         actualLeastDimensionField.text = (currentTarget.actualLeastDimension * 1000f).ToString("F1");
         if (materialTypeDropdown != null)
         {
-            // Ensure realMaterial is assigned before accessing its category
             if (currentTarget.realMaterial != null)
             {
                 materialTypeDropdown.value = (int)currentTarget.realMaterial.aggregateCategory;
             }
             else
             {
-                // Handle case where realMaterial might not be assigned yet
-                materialTypeDropdown.value = (int)AciAggregateCategory.Unknown; 
-                Debug.LogWarning($"MaterialProperties on {currentTarget.gameObject.name} does not have a 'realMaterial' assigned. Material Type cannot be set.");
+                materialTypeDropdown.value = (int)AciAggregateCategory.Unknown;
+                Debug.LogWarning($"MaterialProperties on {currentTarget.gameObject.name} does not have a 'realMaterial' assigned.");
             }
         }
         UpdateFieldVisibility((int)currentTarget.elementType);
-        
-        if (!editorPanel.activeSelf) editorPanel.SetActive(true);
-        
+
         isUpdatingUI = false; // Re-enable listeners
     }
 
-    // Renamed from CloseEditor - hides panel and clears target
-    private void HideEditor()
+    // --- Methods Called Externally ---
+
+    // Called by UIManager when InspectorMode is turned ON
+    public void ShowPanelIfTargetSelected()
+    {
+        if (editorPanel == null || faceInspector == null) return;
+
+        if (faceInspector.CurrentlyInspectedProperties != null)
+        {
+             // A target is selected, show and populate
+             editorPanel.SetActive(true);
+             PopulateEditorFields(faceInspector.CurrentlyInspectedProperties);
+        }
+        else
+        {
+             // No target selected, ensure panel is hidden (or keep visible but empty?)
+             // For now, keep it hidden if no target when mode turns ON.
+             editorPanel.SetActive(false);
+             currentTarget = null;
+        }
+    }
+
+    // Called by UIManager when InspectorMode is turned OFF, or by 'E' key logic if needed
+    public void HideEditor()
     {
         if (editorPanel != null) editorPanel.SetActive(false);
-        currentTarget = null;
+        currentTarget = null; // Clear target when hiding
+    }
+
+    // Called by 'E' key toggle logic
+    public void TogglePanel()
+    {
+         if (editorPanel != null)
+         {
+            bool shouldBeActive = !editorPanel.activeSelf;
+            editorPanel.SetActive(shouldBeActive);
+            
+
+            // If panel becomes visible, ensure it's populated if there's a target
+            if (shouldBeActive && faceInspector != null && faceInspector.IsInspectorCurrentlyActive)
+            {
+                 PopulateEditorFields(faceInspector.CurrentlyInspectedProperties);
+            }
+            else if (!shouldBeActive)
+            {
+                 currentTarget = null; // Clear target if hiding via togglse
+            }
+         }
     }
 
     // --- Listener Handlers (Remain the same) --- 
