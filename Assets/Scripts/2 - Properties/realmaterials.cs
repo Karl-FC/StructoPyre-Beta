@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum AciAggregateCategory { Siliceous, Carbonate, SemiLightweight, Lightweight, Unknown }
+public enum AciAggregateCategory { Siliceous, Carbonate, SemiLightweight, Lightweight, AirCooledSlag, Insulating, Unknown }
 
 [CreateAssetMenu(fileName = "NewAggregateType", menuName = "Simulation/Real World Material")]
 public class AggregateType : ScriptableObject
