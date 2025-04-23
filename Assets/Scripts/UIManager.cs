@@ -57,7 +57,7 @@ public class UIManager : MonoBehaviour
         if (faceInspector != null && inspectorModeButton != null)
             SetButtonColor(inspectorModeButton, false); // Inspector starts inactive
         if (simulationControlsPanel != null && simulatorModeButton != null)
-            SetButtonColor(simulatorModeButton, false); // Sim controls start inactive (hidden by InitUI)
+            SetButtonColor(simulatorModeButton, true); // Sim controls start inactive (hidden by InitUI)
     }
 
     /// <summary>
@@ -66,6 +66,7 @@ public class UIManager : MonoBehaviour
     public void InitUI()
     {
         SetPanel(MainMenu: true, Mapper: false, Background: true, SimGUI: false);
+        if (simulationControlsPanel != null) simulationControlsPanel.SetActive(false);
     }
 
     /// <summary>

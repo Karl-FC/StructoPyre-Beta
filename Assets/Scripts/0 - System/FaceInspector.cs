@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro; // Required for TextMeshPro UI elements
+using cakeslice; // << ADDED for Outline effect
 
 [RequireComponent(typeof(LineRenderer))] // Ensure LineRenderer is present
 public class FaceInspector : MonoBehaviour
@@ -18,6 +19,7 @@ public class FaceInspector : MonoBehaviour
     private Camera mainCamera;
     private bool isInspectorActive = false; // Start inactive by default
     private LineRenderer lineRenderer;
+    private Outline currentOutline; // << ADDED: To track the currently outlined object
 
     // Public getter for the internal state
     public bool IsInspectorCurrentlyActive => isInspectorActive;
@@ -30,6 +32,15 @@ public class FaceInspector : MonoBehaviour
     {
         mainCamera = GetComponent<Camera>();
         lineRenderer = GetComponent<LineRenderer>(); // Get the component
+
+        // Check if OutlineEffect singleton exists (required by Outline component)
+        if (OutlineEffect.Instance == null)
+        {
+             Debug.LogWarning("FaceInspector: OutlineEffect.Instance is null. Make sure an OutlineEffect component exists on a camera or elsewhere.");
+             // Potentially add OutlineEffect to this camera if not found?
+             // gameObject.AddComponent<OutlineEffect>();
+             // Or disable outline functionality? For now, just warn.
+        }
 
         if (mainCamera == null)
         {
@@ -73,7 +84,7 @@ public class FaceInspector : MonoBehaviour
     void Update()
     {
         // Only run if inspector mode is active
-        if (!isInspectorActive || mainCamera == null || inspectionTextUI == null) return;
+        if (!isInspectorActive || mainCamera == null) return; // Removed UI null check as text update is separate
 
         Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
         RaycastHit hit;
@@ -83,29 +94,70 @@ public class FaceInspector : MonoBehaviour
 
         if (didHit)
         {
-            // Try to get MaterialProperties from the hit object
-            MaterialProperties props = hit.collider.GetComponent<MaterialProperties>();
-            
-            // Store the reference to the current properties being inspected
-            currentlyInspectedProperties = props;
+             var hitCollider = hit.collider;
+             var hitGameObject = hitCollider.gameObject; // Cache GameObject
 
-            if (props != null && props.realMaterial != null)
+             // Check if we hit a different object than the currently outlined one
+             if (currentOutline != null && currentOutline.gameObject != hitGameObject)
+             {
+                 currentOutline.enabled = false; // Disable outline on the old object
+                 currentOutline = null;
+             }
+
+             // If nothing is outlined currently (or we just disabled the old one)
+             if (currentOutline == null)
+             {
+                // Only add/enable outline if the object has a renderer
+                if(hitGameObject.GetComponent<Renderer>() != null)
+                {
+                    currentOutline = hitGameObject.GetComponent<Outline>();
+                    if (currentOutline == null)
+                    {
+                        // Add Outline component if it doesn't exist
+                        currentOutline = hitGameObject.AddComponent<Outline>();
+                        // Optional: Configure outline properties here if needed
+                        // currentOutline.color = 1; // Example: Set color index
+                        // currentOutline.eraseRenderer = false; // Example: Ensure renderer isn't erased
+                    }
+                    currentOutline.enabled = true; // Ensure outline is enabled
+                }
+             }
+             // else: we are hitting the same object that's already outlined, do nothing to the outline
+
+
+            // --- Existing Text Update Logic ---
+            MaterialProperties props = hitCollider.GetComponent<MaterialProperties>();
+            currentlyInspectedProperties = props; // Store reference regardless of text update
+
+            if (inspectionTextUI != null) // Check if UI exists before trying to update
             {
-                if (inspectionTextUI != null) inspectionTextUI.text = $"Looking at: {props.realMaterial.realmaterialName}\n" +
-                                        $"Type: {props.elementType}\n" +
-                                        $"Rating: {props.achievedFireResistanceRating:F1} hrs\n" + // Format to 1 decimal place
-                                        $"Cover: {props.actualCover_u * 1000:F0} mm\n" + // Show in mm
-                                        $"Thickness (tₑ): {props.actualEquivalentThickness_te * 1000:F0} mm"; // Show in mm
+                if (props != null && props.realMaterial != null)
+                {
+                    inspectionTextUI.text = $"Looking at: {props.realMaterial.realmaterialName}\n" +
+                                            $"Type: {props.elementType}\n" +
+                                            $"Rating: {props.achievedFireResistanceRating:F1} hrs\n" + // Format to 1 decimal place
+                                            $"Cover: {props.actualCover_u * 1000:F0} mm\n" + // Show in mm
+                                            $"Thickness (tₑ): {props.actualEquivalentThickness_te * 1000:F0} mm"; // Show in mm
+                }
+                else
+                {
+                    inspectionTextUI.text = $"Looking at: {hitCollider.gameObject.name} (No Fire Properties)";
+                }
             }
-            else
-            {
-                if (inspectionTextUI != null) inspectionTextUI.text = $"Looking at: {hit.collider.gameObject.name} (No Fire Properties)";
-            }
+            // --- End Text Update Logic ---
         }
         else
         {
             // Ray didn't hit anything within range
             currentlyInspectedProperties = null; // Clear the reference
+
+            // Disable outline if one was active
+            if (currentOutline != null)
+            {
+                currentOutline.enabled = false;
+                currentOutline = null;
+            }
+
             if (inspectionTextUI != null) inspectionTextUI.text = ""; // Clear the text
         }
 
@@ -155,6 +207,13 @@ public class FaceInspector : MonoBehaviour
                 inspectionTextUI.text = ""; // Clear text when deactivated
             }
             currentlyInspectedProperties = null; // Clear the reference when deactivated
+
+            // << ADDED: Disable outline when inspector is deactivated
+            if (currentOutline != null)
+            {
+                currentOutline.enabled = false;
+                currentOutline = null;
+            }
         }
         Debug.Log($"Inspector Mode Active: {isInspectorActive}"); // Optional debug log
         // Visual update is handled in Update based on showRaycastVisual flag
