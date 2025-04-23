@@ -829,6 +829,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "OpenPropertyEditor",
+                    "type": "Button",
+                    "id": "9cf3be70-8f1f-4ca1-8c28-a6772f04510c",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -895,6 +904,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "ActivateCursor",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "fb756b1b-1a1a-4cc7-9148-9d2c63a496c3",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "OpenPropertyEditor",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

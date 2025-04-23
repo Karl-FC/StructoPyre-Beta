@@ -41,8 +41,7 @@ public class OpenFile : MonoBehaviour
     [Header("Model Scaling")]
     [Tooltip("Enable to manually set scale factor instead of auto-detection")]
     [SerializeField] private bool useManualScaling = false;
-    [Tooltip("Scale factor applied when manual scaling is enabled")]
-    [SerializeField] private float manualScaleFactor = 1.0f;
+    private float manualScaleFactor = 1.0f; // Internal flag, not serialized
     [Tooltip("Toggle to show scale debugging information")]
     [SerializeField] private bool showScaleDebugging = true;
 
@@ -50,6 +49,10 @@ public class OpenFile : MonoBehaviour
     [SerializeField] private TMP_Dropdown unitDropdown;
 
     public RealMaterialMapperUI materialMapperUI; // <--- ADD THIS LINE
+
+    // Store initial scale factors determined on click for WebGL two-step process
+    private bool initialIsManualWebGL = false;
+    private float initialScaleFactorWebGL = 1.0f;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
     // WebGL
@@ -59,6 +62,10 @@ public class OpenFile : MonoBehaviour
     private string objContentWebGL; // Temporary storage for OBJ content
 
     public void OnClickOpen() {
+        // Determine initial scaling based on dropdown *at the time of click*
+        DetermineInitialScale(out initialIsManualWebGL, out initialScaleFactorWebGL);
+        Debug.Log($"[OnClickOpen WebGL] Determined initial scale: isManual={initialIsManualWebGL}, factor={initialScaleFactorWebGL}");
+
         // Request OBJ file first
         UploadFile(gameObject.name, "OnFileUpload", ".obj", false);
     }
@@ -79,20 +86,26 @@ public class OpenFile : MonoBehaviour
             Debug.LogError("MTL file received, but OBJ content was missing!");
             return;
         }
-        Debug.Log("MTL file received. Loading model...");
-        StartCoroutine(OutputRoutineOpenWebGL(objContentWebGL, mtlContent));
+        Debug.Log("MTL file received. Loading model with stored initial scale...");
+        // Start coroutine, passing the scale factors determined back when OnClickOpen was called
+        StartCoroutine(OutputRoutineOpenWebGL(objContentWebGL, mtlContent, initialIsManualWebGL, initialScaleFactorWebGL));
         objContentWebGL = null; // Clear temporary storage
     }
 
 #else
 
-    // Standalone platforms & editor    s
+    // Standalone platforms & editor
     public void OnClickOpen()
     {
-        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", new[] { new ExtensionFilter("3D Model Files", "obj", "mtl") }, false);
+        // Determine initial scaling based on dropdown *at the time of click*
+        DetermineInitialScale(out bool isManual, out float scaleFactor);
+        Debug.Log($"[OnClickOpen Standalone] Determined initial scale: isManual={isManual}, factor={scaleFactor}");
+
+        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", new[] { new ExtensionFilter("3D Model Files", "obj") }, false);
         if (paths.Length > 0)
         {
-            StartCoroutine(OutputRoutineOpen(new System.Uri(paths[0]).AbsoluteUri));
+            // Start coroutine, passing the determined scale factors
+            StartCoroutine(OutputRoutineOpen(new System.Uri(paths[0]).AbsoluteUri, isManual, scaleFactor));
         }
     }
 #endif
@@ -107,8 +120,9 @@ public class OpenFile : MonoBehaviour
     }
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-    private IEnumerator OutputRoutineOpenWebGL(string objContent, string mtlContent)
+    private IEnumerator OutputRoutineOpenWebGL(string objContent, string mtlContent, bool isManual, float scaleFactor)
     {
+        Debug.Log($"[OutputRoutineOpenWebGL] Starting with isManual={isManual}, scaleFactor={scaleFactor}");
         // For WebGL, create streams directly from content strings
         MemoryStream objStream = new MemoryStream(Encoding.UTF8.GetBytes(objContent));
         MemoryStream mtlStream = null;
@@ -132,6 +146,10 @@ public class OpenFile : MonoBehaviour
         }
 
         OBJLoader loader = new OBJLoader();
+        // Set the split mode to Object (or Group if Object isn't available)
+        loader.SplitMode = Dummiesman.SplitMode.Object;
+        Debug.Log($"OBJLoader SplitMode set to: {loader.SplitMode}");
+
         if (mtlStream != null)
         {
             model = loader.Load(objStream, mtlStream);
@@ -160,8 +178,8 @@ public class OpenFile : MonoBehaviour
         // Show the material mapping UI via UIManager
         UIManager.Instance.ShowMaterialMapper();
 
-        // Apply normalization to ensure proper scaling
-        NormalizeModelScale();
+        // Apply normalization using passed-in parameters
+        NormalizeModelScale(isManual, scaleFactor);
 
         // Apply double-sided faces
         DoublicateFaces();
@@ -172,27 +190,32 @@ public class OpenFile : MonoBehaviour
         // --- START MATERIAL MAPPING ---
         if (materialMapperUI != null)
         {
-            List<string> materialNames = new List<string>();
+            HashSet<string> uniqueMaterialNames = new HashSet<string>(); // Use HashSet for uniqueness
             if (model != null)
             {
-                // Collect material names from child GameObjects (since SplitMode = Material)
-                foreach (Transform child in model.transform)
+                // Find all MeshRenderers in the loaded hierarchy
+                MeshRenderer[] renderers = model.GetComponentsInChildren<MeshRenderer>(true); // Include inactive
+
+                foreach (MeshRenderer renderer in renderers)
                 {
-                    // Check if the child has a renderer, indicating it's likely a material part
-                    if (child.GetComponent<MeshRenderer>() != null)
+                    // Get the materials used by this renderer
+                    foreach (Material mat in renderer.sharedMaterials) // Use sharedMaterials to get original names
                     {
-                         materialNames.Add(child.name);
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"Child object {child.name} skipped, no MeshRenderer found.");
+                        if (mat != null)
+                        {
+                            // Material names might have " (Instance)" appended, try to get the base name
+                            string baseName = mat.name.Replace(" (Instance)", "").Trim();
+                            uniqueMaterialNames.Add(baseName);
+                        }
                     }
                 }
             }
 
+            List<string> materialNames = new List<string>(uniqueMaterialNames); // Convert HashSet to List
+
             if (materialNames.Count > 0)
             {
-                Debug.Log($"Found materials to map: {string.Join(", ", materialNames)}");
+                Debug.Log($"Found unique materials to map: {string.Join(", ", materialNames)}");
 
                 // Subscribe to the confirmation event (unsubscribe first to prevent duplicates)
                 materialMapperUI.OnMappingsConfirmed -= HandleMaterialMappings; // Use '-=' first
@@ -232,10 +255,11 @@ public class OpenFile : MonoBehaviour
     }
 #endif
 
-    // This coroutine now ONLY handles Standalone/Editor paths (using file URI)
-    private IEnumerator OutputRoutineOpen(string url)
+    // This coroutine now ONLY handles Standalone/Editor paths - accepts scale factors as parameters
+    private IEnumerator OutputRoutineOpen(string url, bool isManual, float scaleFactor)
     {
 #if UNITY_EDITOR || UNITY_STANDALONE
+        Debug.Log($"[OutputRoutineOpen] Starting with isManual={isManual}, scaleFactor={scaleFactor}");
         // For Standalone/Editor, 'url' is the URI/Path
         string objPath = url; // Keep original name for clarity in this block
         string directoryPath = Path.GetDirectoryName(objPath);
@@ -292,6 +316,10 @@ public class OpenFile : MonoBehaviour
         }
 
         OBJLoader loader = new OBJLoader();
+        // Set the split mode to Object (or Group if Object isn't available)
+        loader.SplitMode = Dummiesman.SplitMode.Object;
+        Debug.Log($"OBJLoader SplitMode set to: {loader.SplitMode}");
+
         if (mtlStream != null)
         {
             model = loader.Load(objStream, mtlStream);
@@ -320,8 +348,8 @@ public class OpenFile : MonoBehaviour
         // Show the material mapping UI via UIManager
         UIManager.Instance.ShowMaterialMapper();
 
-        // Apply normalization to ensure proper scaling
-        NormalizeModelScale();
+        // Apply normalization using passed-in parameters
+        NormalizeModelScale(isManual, scaleFactor);
 
         // Apply double-sided faces
         DoublicateFaces();
@@ -332,27 +360,32 @@ public class OpenFile : MonoBehaviour
         // --- START MATERIAL MAPPING ---
         if (materialMapperUI != null)
         {
-            List<string> materialNames = new List<string>();
+            HashSet<string> uniqueMaterialNames = new HashSet<string>(); // Use HashSet for uniqueness
             if (model != null)
             {
-                // Collect material names from child GameObjects (since SplitMode = Material)
-                foreach (Transform child in model.transform)
+                // Find all MeshRenderers in the loaded hierarchy
+                MeshRenderer[] renderers = model.GetComponentsInChildren<MeshRenderer>(true); // Include inactive
+
+                foreach (MeshRenderer renderer in renderers)
                 {
-                    // Check if the child has a renderer, indicating it's likely a material part
-                    if (child.GetComponent<MeshRenderer>() != null)
+                    // Get the materials used by this renderer
+                    foreach (Material mat in renderer.sharedMaterials) // Use sharedMaterials to get original names
                     {
-                         materialNames.Add(child.name);
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"Child object {child.name} skipped, no MeshRenderer found.");
+                        if (mat != null)
+                        {
+                            // Material names might have " (Instance)" appended, try to get the base name
+                            string baseName = mat.name.Replace(" (Instance)", "").Trim();
+                            uniqueMaterialNames.Add(baseName);
+                        }
                     }
                 }
             }
 
+            List<string> materialNames = new List<string>(uniqueMaterialNames); // Convert HashSet to List
+
             if (materialNames.Count > 0)
             {
-                Debug.Log($"Found materials to map: {string.Join(", ", materialNames)}");
+                Debug.Log($"Found unique materials to map: {string.Join(", ", materialNames)}");
 
                 // Subscribe to the confirmation event (unsubscribe first to prevent duplicates)
                 materialMapperUI.OnMappingsConfirmed -= HandleMaterialMappings; // Use '-=' first
@@ -392,8 +425,10 @@ public class OpenFile : MonoBehaviour
 #endif
     }
 
-    private void NormalizeModelScale()
+    private void NormalizeModelScale(bool isManual, float factorToApply)
     {
+        Debug.Log($"[NormalizeModelScale] Entered with isManual={isManual}, factorToApply={factorToApply}");
+        
         // Get the model's bounds
         Bounds bounds = GetBound(model);
         
@@ -404,13 +439,14 @@ public class OpenFile : MonoBehaviour
         
         float scaleFactor = 1.0f;
         
-        if (useManualScaling)
+        // Use the passed-in parameters to determine scaling
+        if (isManual) 
         {
-            // Use the manual scale factor if enabled
-            scaleFactor = manualScaleFactor;
+            // Use the factor passed as a parameter
+            scaleFactor = factorToApply;
             if (showScaleDebugging)
             {
-                Debug.Log($"Using manual scale factor: {scaleFactor}");
+                Debug.Log($"Using manual scale factor (from parameters): {scaleFactor}");
             }
         }
         else
@@ -554,7 +590,7 @@ public class OpenFile : MonoBehaviour
             // Reset to base flipped scale first
             model.transform.localScale = new Vector3(-1, 1, 1);
             // Then apply the new scale factor
-            NormalizeModelScale();
+            NormalizeModelScale(useManualScaling, manualScaleFactor);
         }
     }
 
@@ -563,33 +599,46 @@ public class OpenFile : MonoBehaviour
         // If a model is loaded, apply the new scale immediately
         if (model != null)
         {
-            // Reset to base flipped scale first
-            model.transform.localScale = new Vector3(-1, 1, 1);
+            Debug.Log($"[OnUnitTypeChanged] Processing index: {index}. Applying scale to loaded model.");
             
-            // Apply the selected unit conversion
-            useManualScaling = (index != 0); // If not "autodetect", use manual scaling
-            
+            // Determine scale factors based on the NEW index
+            bool isManualScale = (index != 0);
+            float newScaleFactor;
             switch(index)
             {
-                case 0: // Autodetect
-                    useManualScaling = false;
-                    break;
-                case 1: // Metric-millimeters
-                    manualScaleFactor = 0.001f; // 1mm = 0.001m in Unity
-                    break;
-                case 2: // Metric-meters
-                    manualScaleFactor = 1.0f;   // 1m = 1m in Unity
-                    break;
-                case 3: // Imperial-feet
-                    manualScaleFactor = 0.3048f; // 1ft = 0.3048m
-                    break;
-                case 4: // Imperial-inches
-                    manualScaleFactor = 0.0254f; // 1in = 0.0254m
-                    break;
+                case 1: newScaleFactor = 0.001f; break;
+                case 2: newScaleFactor = 1.0f; break;
+                case 3: newScaleFactor = 0.3048f; break;
+                case 4: newScaleFactor = 0.0254f; break;
+                default: isManualScale = false; newScaleFactor = 1.0f; break; // Autodetect or unknown
             }
+
+            // Store these potentially for future use IF the listener issue gets fixed
+            // but NormalizeModelScale will use the passed parameters for this call.
+            this.useManualScaling = isManualScale; 
+            this.manualScaleFactor = newScaleFactor;
+
+            // Reset scale before applying new one
+            model.transform.localScale = new Vector3(-1, 1, 1);
             
-            // Re-apply scaling
-            NormalizeModelScale();
+            // Apply scaling using factors determined here
+            Debug.Log($"[OnUnitTypeChanged] Calling NormalizeModelScale with isManual={isManualScale}, newScaleFactor={newScaleFactor}");
+            NormalizeModelScale(isManualScale, newScaleFactor);
+        }
+        else
+        {
+            // If model not loaded, just update the internal state for the *next* load (via Start)
+            // This part might be redundant now but doesn't hurt
+            this.useManualScaling = (index != 0);
+             switch(index)
+            {
+                case 1: this.manualScaleFactor = 0.0001f; break; //mm
+                case 2: this.manualScaleFactor = 0.1f; break; //m
+                case 3: this.manualScaleFactor = 0.03048f; break; //ft
+                case 4: this.manualScaleFactor = 0.00254f; break; //in
+                default: this.manualScaleFactor = 1.0f; break; // Autodetect or unknown
+            }
+             Debug.LogWarning($"[OnUnitTypeChanged] Called but model is null. Updated internal state: useManual={useManualScaling}, factor={manualScaleFactor}");
         }
     }
 
@@ -599,59 +648,71 @@ public class OpenFile : MonoBehaviour
 
         if (model != null)
         {
+            // Iterate through the child OBJECTS (Columns, Slabs, etc.)
             foreach (Transform child in model.transform)
             {
-                // Check if this child's name exists in the mapping dictionary
-                if (materialMappings.TryGetValue(child.name, out AggregateType realMaterial))
+                MeshRenderer renderer = child.GetComponent<MeshRenderer>();
+                if (renderer == null)
                 {
-                    if (realMaterial != null)
+                    Debug.LogWarning($"Child object '{child.name}' has no MeshRenderer, skipping material property assignment.");
+                    continue; // Skip if no renderer
+                }
+
+                AggregateType mappedAggregateType = null;
+                string originalMaterialName = "Unknown";
+
+                // Find the first material on this renderer that has a mapping
+                foreach (Material mat in renderer.sharedMaterials)
+                {
+                    if (mat != null)
                     {
-                        // Add or get the component to store the mapped material
-                        MaterialProperties materialProps = child.gameObject.GetComponent<MaterialProperties>();
-                        if (materialProps == null) // Add if it doesn't exist
+                        string baseName = mat.name.Replace(" (Instance)", "").Trim();
+                        if (materialMappings.TryGetValue(baseName, out AggregateType foundMapping))
                         {
-                            materialProps = child.gameObject.AddComponent<MaterialProperties>();
+                            mappedAggregateType = foundMapping;
+                            originalMaterialName = baseName; // Store the name of the material that triggered the mapping
+                            break; // Found a mapping for this object, use it and stop checking materials
                         }
-                        materialProps.realMaterial = realMaterial; // Assign the ScriptableObject
-
-                        // Determine the input unit system based on the dropdown selection
-                        UnitSystem selectedUnitSystem = UnitSystem.Imperial; // Default to Imperial if autodetect
-                        if (unitDropdown != null)
-                        {
-                            // Dropdown indices: 0=Autodetect, 1=mm, 2=m, 3=ft, 4=in
-                            if (unitDropdown.value == 1 || unitDropdown.value == 2)
-                            {
-                                selectedUnitSystem = UnitSystem.Metric;
-                            }
-                            else if (unitDropdown.value == 3 || unitDropdown.value == 4)
-                            {
-                                selectedUnitSystem = UnitSystem.Imperial;
-                            }
-                            // If value is 0 (Autodetect), we'll stick with the default Imperial assumption for the *source* of these ACI defaults.
-                        }
-                        materialProps.inputUnitSystem = selectedUnitSystem;
-
-                        // MVP: Set default ACI values (converted to meters for internal storage)
-                        // Defaulting to values corresponding to an Imperial input (1.5 inches, 6.0 inches)
-                        float inchesToMeters = 0.0254f;
-                        materialProps.elementType = AciElementType.Slab;
-                        materialProps.restraint = AciRestraint.Unrestrained;
-                        materialProps.prestress = AciPrestress.Nonprestressed;
-                        materialProps.actualCover_u = 1.5f * inchesToMeters; // 1.5 inches converted to meters
-                        materialProps.actualEquivalentThickness_te = 6.0f * inchesToMeters; // 6.0 inches converted to meters
-                        // actualLeastDimension, steelShape, actualProtectionThickness_h can be left at their defaults for now or set based on element type assumption
-
-                        Debug.Log($"Applied '{realMaterial.realmaterialName}' properties to '{child.name}'");
                     }
-                    else
+                }
+
+                // If a mapping was found for any material on this object
+                if (mappedAggregateType != null)
+                {
+                    // Add or get the MaterialProperties component on the CHILD OBJECT
+                    MaterialProperties materialProps = child.gameObject.GetComponent<MaterialProperties>();
+                    if (materialProps == null) // Add if it doesn't exist
                     {
-                         Debug.LogWarning($"Mapping for '{child.name}' resulted in a null AggregateType.");
+                        materialProps = child.gameObject.AddComponent<MaterialProperties>();
                     }
+                    materialProps.realMaterial = mappedAggregateType; // Assign the mapped ScriptableObject
+
+                    // Determine the input unit system (existing logic)
+                    UnitSystem selectedUnitSystem = UnitSystem.Imperial; // Default
+                    if (unitDropdown != null)
+                    {
+                        if (unitDropdown.value == 1 || unitDropdown.value == 2) selectedUnitSystem = UnitSystem.Metric;
+                        else if (unitDropdown.value == 3 || unitDropdown.value == 4) selectedUnitSystem = UnitSystem.Imperial;
+                    }
+                    materialProps.inputUnitSystem = selectedUnitSystem;
+
+                    // Set default ACI values (existing logic - BUT elementType should be defaulted)
+                    float inchesToMeters = 0.0254f;
+                    // *** Default elementType - User will override via Inspector later ***
+                    materialProps.elementType = AciElementType.Slab; // Default to 'Other' or 'Slab'
+                    materialProps.restraint = AciRestraint.Unrestrained;
+                    materialProps.prestress = AciPrestress.Nonprestressed;
+                    materialProps.actualCover_u = 1.5f * inchesToMeters; // Default
+                    materialProps.actualEquivalentThickness_te = 6.0f * inchesToMeters; // Default
+
+                    Debug.Log($"Applied mapping based on material '{originalMaterialName}' to object '{child.name}'. Mapped to '{mappedAggregateType.realmaterialName}'. ElementType defaulted to {materialProps.elementType}.");
                 }
                 else
                 {
-                    Debug.LogWarning($"No mapping found for imported material/object: '{child.name}'");
-                    // Optionally add a default MaterialProperties component or handle as needed
+                    Debug.LogWarning($"No material mapping found for any materials on object: '{child.name}'. It will not have MaterialProperties.");
+                    // Optionally destroy existing MaterialProperties if re-mapping
+                    MaterialProperties existingProps = child.GetComponent<MaterialProperties>();
+                    if (existingProps != null) Destroy(existingProps);
                 }
             }
         }
@@ -667,6 +728,41 @@ public class OpenFile : MonoBehaviour
     private void FinalizeModelLoad()
     {
         Debug.Log("Finalizing model load process...");
+
+        // Calculate achieved fire rating for all relevant children
+        if (model != null)
+        {
+            foreach (Transform child in model.transform)
+            {
+                MaterialProperties props = child.GetComponent<MaterialProperties>();
+                if (props != null)
+                {
+                    // Add Mesh Collider if missing for raycasting
+                    if (child.GetComponent<MeshCollider>() == null)
+                    {
+                        child.gameObject.AddComponent<MeshCollider>();
+                        Debug.Log($"Added MeshCollider to {child.name}");
+                    }
+
+                    // Set the layer for raycasting
+                    string layerName = "InspectableModel"; // Make sure this matches your actual layer name
+                    int layerValue = LayerMask.NameToLayer(layerName);
+                    child.gameObject.layer = layerValue;
+                    // ADD DEBUG LOG HERE
+                    if (layerValue == -1)
+                        Debug.LogWarning($"Layer '{layerName}' does not exist! Could not set layer for {child.name}.");
+                    else
+                        Debug.Log($"Set layer for {child.name} to {layerValue} ({layerName})");
+
+                    props.achievedFireResistanceRating = AciRatingCalculator.CalculateRating(props);
+                    // Debug.Log($"Calculated rating for '{child.name}': {props.achievedFireResistanceRating} hours"); // Original log, maybe comment out if too spammy
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Cannot calculate ratings because model is null during FinalizeModelLoad.");
+        }
 
         // Any other final setup steps for the model could go here
 
@@ -691,6 +787,35 @@ public class OpenFile : MonoBehaviour
         if (materialMapperUI != null)
         {
             materialMapperUI.OnMappingsConfirmed -= HandleMaterialMappings;
+        }
+    }
+
+    // Helper function to get scaling factors based on current dropdown value
+    private void DetermineInitialScale(out bool isManual, out float scaleFactor)
+    {
+        int currentIndex = (unitDropdown != null) ? unitDropdown.value : 0; // Default to Autodetect if no dropdown
+        isManual = (currentIndex != 0);
+        
+        switch(currentIndex)
+        {
+            // case 0: // Autodetect - scaleFactor remains 1.0f, isManual is false
+            //     scaleFactor = 1.0f; 
+            //     break; 
+            case 1: // Metric-millimeters
+                scaleFactor = 0.001f;
+                break;
+            case 2: // Metric-meters
+                scaleFactor = 1.0f;
+                break;
+            case 3: // Imperial-feet
+                scaleFactor = 0.3048f;
+                break;
+            case 4: // Imperial-inches
+                scaleFactor = 0.0254f;
+                break;
+            default: // Includes Autodetect (index 0)
+                scaleFactor = 1.0f; // Default factor for auto-detect case
+                break;
         }
     }
 }
