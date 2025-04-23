@@ -15,6 +15,7 @@ public class MaterialPropertyEditor : MonoBehaviour
     [SerializeField] private TMP_Dropdown restraintDropdown;
     [SerializeField] private GameObject fireExposureSection;
     [SerializeField] private TMP_Dropdown columnFireExposureDropdown;
+    [SerializeField] private TMP_Dropdown materialTypeDropdown;
     [SerializeField] private GameObject dimensionsSection;
     [SerializeField] private GameObject coverSection;
     [SerializeField] private TMP_InputField actualCoverField;
@@ -61,6 +62,12 @@ public class MaterialPropertyEditor : MonoBehaviour
             columnFireExposureDropdown.ClearOptions();
             columnFireExposureDropdown.AddOptions(new System.Collections.Generic.List<string>(Enum.GetNames(typeof(AciColumnFireExposure))));
         }
+        // Initialize Material Type Dropdown
+        if (materialTypeDropdown != null)
+        {
+            materialTypeDropdown.ClearOptions();
+            materialTypeDropdown.AddOptions(new System.Collections.Generic.List<string>(Enum.GetNames(typeof(AciAggregateCategory))));
+        }
         
         // Add listeners for automatic updates
         elementTypeDropdown?.onValueChanged.AddListener(HandleElementTypeChanged);
@@ -69,6 +76,7 @@ public class MaterialPropertyEditor : MonoBehaviour
         actualCoverField?.onEndEdit.AddListener(HandleCoverChanged);
         actualThicknessField?.onEndEdit.AddListener(HandleThicknessChanged);
         actualLeastDimensionField?.onEndEdit.AddListener(HandleLeastDimensionChanged);
+        materialTypeDropdown?.onValueChanged.AddListener(HandleMaterialTypeChanged);
     }
 
     private void Update()
@@ -127,7 +135,7 @@ public class MaterialPropertyEditor : MonoBehaviour
         currentTarget = target;
         isUpdatingUI = true; // Prevent listeners from firing
 
-        if (objectNameText != null) objectNameText.text = $"Inspecting: {currentTarget.gameObject.name}";
+        if (objectNameText != null) objectNameText.text = $"{currentTarget.gameObject.name}";
 
         // Setup the form with current values
         elementTypeDropdown.value = (int)currentTarget.elementType;
@@ -136,7 +144,20 @@ public class MaterialPropertyEditor : MonoBehaviour
         actualCoverField.text = (currentTarget.actualCover_u * 1000f).ToString("F1");
         actualThicknessField.text = (currentTarget.actualEquivalentThickness_te * 1000f).ToString("F1");
         actualLeastDimensionField.text = (currentTarget.actualLeastDimension * 1000f).ToString("F1");
-
+        if (materialTypeDropdown != null)
+        {
+            // Ensure realMaterial is assigned before accessing its category
+            if (currentTarget.realMaterial != null)
+            {
+                materialTypeDropdown.value = (int)currentTarget.realMaterial.aggregateCategory;
+            }
+            else
+            {
+                // Handle case where realMaterial might not be assigned yet
+                materialTypeDropdown.value = (int)AciAggregateCategory.Unknown; 
+                Debug.LogWarning($"MaterialProperties on {currentTarget.gameObject.name} does not have a 'realMaterial' assigned. Material Type cannot be set.");
+            }
+        }
         UpdateFieldVisibility((int)currentTarget.elementType);
         
         if (!editorPanel.activeSelf) editorPanel.SetActive(true);
@@ -158,6 +179,20 @@ public class MaterialPropertyEditor : MonoBehaviour
     private void HandleCoverChanged(string value) { if (isUpdatingUI || currentTarget == null) return; if (float.TryParse(value, out float v)) { currentTarget.actualCover_u = v / 1000f; RecalculateRating("Cover"); } }
     private void HandleThicknessChanged(string value) { if (isUpdatingUI || currentTarget == null) return; if (float.TryParse(value, out float v)) { currentTarget.actualEquivalentThickness_te = v / 1000f; RecalculateRating("Thickness"); } }
     private void HandleLeastDimensionChanged(string value) { if (isUpdatingUI || currentTarget == null) return; if (float.TryParse(value, out float v)) { currentTarget.actualLeastDimension = v / 1000f; RecalculateRating("LeastDimension"); } }
+    // --- New Handler for Material Type Dropdown ---
+    private void HandleMaterialTypeChanged(int value)
+    {
+        if (isUpdatingUI || currentTarget == null || currentTarget.realMaterial == null)
+        {
+             if(currentTarget != null && currentTarget.realMaterial == null)
+             {
+                 Debug.LogWarning($"Cannot change Aggregate Category for {currentTarget.gameObject.name} because 'realMaterial' is not assigned.");
+             }
+            return;
+        }
+        currentTarget.realMaterial.aggregateCategory = (AciAggregateCategory)value;
+        RecalculateRating("AggregateCategory");
+    }
 
     // --- Helper Methods (Remain the same) --- 
     private void UpdateFieldVisibility(int elementTypeIndex)
@@ -179,6 +214,8 @@ public class MaterialPropertyEditor : MonoBehaviour
         if (thicknessSection != null) thicknessSection.SetActive(showThickness);
         if (leastDimensionSection != null) leastDimensionSection.SetActive(showLeastDimension);
         if (dimensionsSection != null) dimensionsSection.SetActive(showCover || showThickness || showLeastDimension);
+        // Material Type Dropdown is always part of the parameters section if it's visible
+        if (materialTypeDropdown != null) materialTypeDropdown.gameObject.SetActive(parametersSection != null && parametersSection.activeSelf);
     }
     private void RecalculateRating(string changedProperty = "Unknown")
     {

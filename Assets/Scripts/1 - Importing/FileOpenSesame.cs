@@ -699,7 +699,7 @@ public class OpenFile : MonoBehaviour
                     // Set default ACI values (existing logic - BUT elementType should be defaulted)
                     float inchesToMeters = 0.0254f;
                     // *** Default elementType - User will override via Inspector later ***
-                    materialProps.elementType = AciElementType.Other; // Default to 'Other' or 'Slab'
+                    materialProps.elementType = AciElementType.Slab; // Default to 'Other' or 'Slab'
                     materialProps.restraint = AciRestraint.Unrestrained;
                     materialProps.prestress = AciPrestress.Nonprestressed;
                     materialProps.actualCover_u = 1.5f * inchesToMeters; // Default
