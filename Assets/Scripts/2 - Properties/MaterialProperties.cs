@@ -3,7 +3,6 @@ using UnityEngine;
 // Ensure this script is saved as "MaterialProperties.cs"
 public enum AciElementType { Slab, Beam, Wall, ConcreteColumn, Other }
 public enum AciRestraint { Restrained, Unrestrained, NotApplicable }
-public enum AciPrestress { Nonprestressed, NotApplicable }
 public enum AciColumnFireExposure { TwoParallelSides, FourSides, Other }
 
 public enum UnitSystem { Metric, Imperial }
@@ -18,8 +17,6 @@ public class MaterialProperties : MonoBehaviour
     public AciElementType elementType = AciElementType.Other;
 
     public AciRestraint restraint = AciRestraint.NotApplicable;
-
-    public AciPrestress prestress = AciPrestress.NotApplicable;
 
     // Input unit system for the dimension values below (Metric or Imperial)
     public UnitSystem inputUnitSystem;

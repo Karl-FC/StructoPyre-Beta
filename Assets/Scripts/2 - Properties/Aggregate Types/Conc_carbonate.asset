@@ -15,3 +15,4 @@ MonoBehaviour:
   realmaterialName: Carbonate
   defaultThickness: 0.1
   flammabilityRating: 0.5
+  aggregateCategory: 1

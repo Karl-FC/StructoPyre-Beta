@@ -701,7 +701,6 @@ public class OpenFile : MonoBehaviour
                     // *** Default elementType - User will override via Inspector later ***
                     materialProps.elementType = AciElementType.Slab; // Default to 'Other' or 'Slab'
                     materialProps.restraint = AciRestraint.Unrestrained;
-                    materialProps.prestress = AciPrestress.Nonprestressed;
                     materialProps.actualCover_u = 1.5f * inchesToMeters; // Default
                     materialProps.actualEquivalentThickness_te = 6.0f * inchesToMeters; // Default
 
