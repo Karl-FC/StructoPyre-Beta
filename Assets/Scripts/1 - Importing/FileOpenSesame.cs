@@ -697,14 +697,16 @@ public class OpenFile : MonoBehaviour
                     materialProps.inputUnitSystem = selectedUnitSystem;
 
                     // Set default ACI values (existing logic - BUT elementType should be defaulted)
-                    float inchesToMeters = 0.0254f;
+                    // float inchesToMeters = 0.0254f; // No longer needed for direct metric defaults
                     // *** Default elementType - User will override via Inspector later ***
-                    materialProps.elementType = AciElementType.Slab; // Default to 'Other' or 'Slab'
-                    materialProps.restraint = AciRestraint.Unrestrained;
-                    materialProps.actualCover_u = 1.5f * inchesToMeters; // Default
-                    materialProps.actualEquivalentThickness_te = 6.0f * inchesToMeters; // Default
+                    materialProps.elementType = AciElementType.Slab; // Default to 'Slab'
+                    materialProps.restraint = AciRestraint.Unrestrained; // Default restraint
+                    materialProps.actualCover_u = 0.025f; // Default: 25mm converted to meters
+                    materialProps.actualEquivalentThickness_te = 0.125f; // Default: 125mm converted to meters
+                    materialProps.actualLeastDimension = 0.300f; // Keep a reasonable default (e.g., 300mm) for columns if needed later
+                    materialProps.columnFireExposure = AciColumnFireExposure.FourSides; // Default exposure
 
-                    Debug.Log($"Applied mapping based on material '{originalMaterialName}' to object '{child.name}'. Mapped to '{mappedAggregateType.realmaterialName}'. ElementType defaulted to {materialProps.elementType}.");
+                    Debug.Log($"Applied mapping based on material '{originalMaterialName}' to object '{child.name}'. Mapped to '{mappedAggregateType.realmaterialName}'. ElementType defaulted to {materialProps.elementType}. Defaults set: Thickness=125mm, Cover=25mm.");
                 }
                 else
                 {
