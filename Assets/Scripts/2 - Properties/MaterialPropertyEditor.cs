@@ -118,7 +118,17 @@ public class MaterialPropertyEditor : MonoBehaviour
         currentTarget = target;
         isUpdatingUI = true;
 
-        if (objectNameText != null) objectNameText.text = $"{currentTarget.gameObject.name}";
+        if (objectNameText != null)
+        {
+            if (currentTarget.realMaterial != null)
+            {
+                objectNameText.text = $"{currentTarget.gameObject.name} ({currentTarget.realMaterial.realmaterialName})";
+            }
+            else
+            {
+                objectNameText.text = $"{currentTarget.gameObject.name}";
+            }
+        }
 
         UpdateDimensionLabels();
 
@@ -258,8 +268,31 @@ public class MaterialPropertyEditor : MonoBehaviour
              }
             return;
         }
-        currentTarget.realMaterial.aggregateCategory = (AciAggregateCategory)value;
+        
+        // Create a new instance of the material to avoid changing the original asset
+        AggregateType originalMaterial = currentTarget.realMaterial;
+        AggregateType uniqueMaterial = ScriptableObject.CreateInstance<AggregateType>();
+        
+        // Copy all properties
+        uniqueMaterial.realmaterialName = originalMaterial.realmaterialName;
+        uniqueMaterial.defaultThickness = originalMaterial.defaultThickness;
+        uniqueMaterial.flammabilityRating = originalMaterial.flammabilityRating;
+        
+        // Set the new aggregate category
+        uniqueMaterial.aggregateCategory = (AciAggregateCategory)value;
+        
+        // Update the name to reflect the category
+        uniqueMaterial.realmaterialName = Enum.GetName(typeof(AciAggregateCategory), uniqueMaterial.aggregateCategory);
+        
+        // Assign the new instance to this object
+        currentTarget.realMaterial = uniqueMaterial;
+        
         RecalculateRating("AggregateCategory");
+        
+        // Update the UI display
+        objectNameText.text = $"{currentTarget.gameObject.name} ({uniqueMaterial.realmaterialName})";
+        
+        Debug.Log($"Created unique material for {currentTarget.gameObject.name} with category: {uniqueMaterial.aggregateCategory}");
     }
 
     private void UpdateDimensionLabels()

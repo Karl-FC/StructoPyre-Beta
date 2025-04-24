@@ -112,8 +112,15 @@ public class SimulationManager : MonoBehaviour
         {
             visualizer.ResetVisuals();
         }
+        
+        // Find all fire configs and reset them
+        FireConfig[] fireConfigs = FindObjectsOfType<FireConfig>();
+        foreach (FireConfig config in fireConfigs)
+        {
+            config.ResetFire();
+        }
 
-        Debug.Log($"Simulation Reset Complete. Reset {trackers.Length} trackers and {visualizers.Length} visualizers.");
+        Debug.Log($"Simulation Reset Complete. Reset {trackers.Length} trackers, {visualizers.Length} visualizers, and {fireConfigs.Length} fire sources.");
     }
 
     // Change simulation speed during runtime

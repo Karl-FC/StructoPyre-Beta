@@ -688,13 +688,24 @@ public class OpenFile : MonoBehaviour
                 // If a mapping was found for any material on this object
                 if (mappedAggregateType != null)
                 {
+                    // Create a unique instance of the material to avoid shared references
+                    AggregateType uniqueMaterial = ScriptableObject.CreateInstance<AggregateType>();
+                    
+                    // Copy all properties from the mapped type
+                    uniqueMaterial.realmaterialName = mappedAggregateType.realmaterialName;
+                    uniqueMaterial.defaultThickness = mappedAggregateType.defaultThickness;
+                    uniqueMaterial.flammabilityRating = mappedAggregateType.flammabilityRating;
+                    uniqueMaterial.aggregateCategory = mappedAggregateType.aggregateCategory;
+                    
                     // Add or get the MaterialProperties component on the CHILD OBJECT
                     MaterialProperties materialProps = child.gameObject.GetComponent<MaterialProperties>();
                     if (materialProps == null) // Add if it doesn't exist
                     {
                         materialProps = child.gameObject.AddComponent<MaterialProperties>();
                     }
-                    materialProps.realMaterial = mappedAggregateType; // Assign the mapped ScriptableObject
+                    
+                    // Assign the unique instance (not the shared reference)
+                    materialProps.realMaterial = uniqueMaterial;
 
                     // *** Store the selected input unit system (used for setting defaults below) ***
                     materialProps.inputUnitSystem = GlobalVariables.DisplayUnitSystem;
@@ -724,7 +735,7 @@ public class OpenFile : MonoBehaviour
                         defaultThicknessStr = "5in";
                     }
 
-                    Debug.Log($"Applied mapping based on material '{originalMaterialName}' to object '{child.name}'. Mapped to '{mappedAggregateType.realmaterialName}'. ElementType defaulted to {materialProps.elementType}. Defaults set (using {materialProps.inputUnitSystem} system): Thickness={defaultThicknessStr}, Cover={defaultCoverStr}.");
+                    Debug.Log($"Applied mapping based on material '{originalMaterialName}' to object '{child.name}'. Created unique instance with category: {uniqueMaterial.aggregateCategory}. ElementType defaulted to {materialProps.elementType}. Defaults set (using {materialProps.inputUnitSystem} system): Thickness={defaultThicknessStr}, Cover={defaultCoverStr}.");
                 }
                 else
                 {
@@ -781,7 +792,9 @@ public class OpenFile : MonoBehaviour
                     // Add FireIntegrityTracker if it doesn't exist
                     if (child.GetComponent<FireIntegrityTracker>() == null)
                     {
-                         child.gameObject.AddComponent<FireIntegrityTracker>();
+                         FireIntegrityTracker tracker = child.gameObject.AddComponent<FireIntegrityTracker>();
+                         // Set the layer mask explicitly
+                         tracker.spreadableLayerMask = LayerMask.GetMask("InspectableModel");
                          // Debug.Log($"Added FireIntegrityTracker to {child.name}");
                     }
 
@@ -790,6 +803,12 @@ public class OpenFile : MonoBehaviour
                     {
                         child.gameObject.AddComponent<IntegrityVisualizer>();
                         // Debug.Log($"Added IntegrityVisualizer to {child.name}");
+                    }
+                    
+                    // Add FireSpreadVisualizer if it doesn't exist
+                    if (child.GetComponent<FireSpreadVisualizer>() == null)
+                    {
+                        child.gameObject.AddComponent<FireSpreadVisualizer>();
                     }
                     // *** END ADD SIMULATION COMPONENTS ***
                 }
