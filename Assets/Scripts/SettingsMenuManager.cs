@@ -8,12 +8,12 @@ public class SettingsMenuManager : MonoBehaviour
     [Header("UI References")]
     [SerializeField] public GameObject settingsPanel;
     [SerializeField] private TMP_Text globalUnitsText;
-    [SerializeField] private TMP_Dropdown unitDropdown;
     
     [Header("Simulation Settings")]
     [SerializeField] private TMP_Text simulationTimeText;
     [SerializeField] private TMP_InputField simulationTimeInputField;
-    [SerializeField] private TMP_InputField simulationSpeedInputField;
+    [SerializeField] private Slider simulationSpeedSlider;
+    [SerializeField] private TMP_Text simulationSpeedValueText;
     
     [Header("Controls Settings")]
     [SerializeField] private Toggle dpadToggle;
@@ -73,7 +73,6 @@ public class SettingsMenuManager : MonoBehaviour
     {
         // Set content type for input fields to allow only decimal numbers
         if (simulationTimeInputField != null) simulationTimeInputField.contentType = TMP_InputField.ContentType.DecimalNumber;
-        if (simulationSpeedInputField != null) simulationSpeedInputField.contentType = TMP_InputField.ContentType.DecimalNumber;
         if (cameraSpeedInputField != null) cameraSpeedInputField.contentType = TMP_InputField.ContentType.DecimalNumber;
         if (fireSpreadRadiusInputField != null) fireSpreadRadiusInputField.contentType = TMP_InputField.ContentType.DecimalNumber;
         if (spreadThresholdInputField != null) spreadThresholdInputField.contentType = TMP_InputField.ContentType.DecimalNumber;
@@ -83,19 +82,14 @@ public class SettingsMenuManager : MonoBehaviour
     private void SetupListeners()
     {
         // Add listeners to UI controls
-        if (unitDropdown != null)
-        {
-            unitDropdown.onValueChanged.AddListener(OnUnitSystemChanged);
-        }
-        
         if (simulationTimeInputField != null)
         {
             simulationTimeInputField.onEndEdit.AddListener(OnSimulationTimeChanged);
         }
         
-        if (simulationSpeedInputField != null)
+        if (simulationSpeedSlider != null)
         {
-            simulationSpeedInputField.onEndEdit.AddListener(OnSimulationSpeedChanged);
+            simulationSpeedSlider.onValueChanged.AddListener(OnSimulationSpeedChanged);
         }
         
         if (dpadToggle != null)
@@ -196,19 +190,6 @@ public class SettingsMenuManager : MonoBehaviour
             globalUnitsText.text = $"Units: {GlobalVariables.DisplayUnitSystem}";
         }
         
-        // Update unit dropdown
-        if (unitDropdown != null && unitDropdown.options.Count > 0)
-        {
-            if (GlobalVariables.DisplayUnitSystem == UnitSystem.Metric)
-            {
-                unitDropdown.value = 2;
-            }
-            else
-            {
-                unitDropdown.value = 3;
-            }
-        }
-        
         // Update simulation time and speed
         if (simulationManager != null)
         {
@@ -220,9 +201,13 @@ public class SettingsMenuManager : MonoBehaviour
             {
                  simulationTimeText.text = $"Sim Time: {simulationManager.simulationTimeSeconds:F1} s";
             }
-            if (simulationSpeedInputField != null)
+            if (simulationSpeedSlider != null)
             {
-                simulationSpeedInputField.text = simulationManager.simulationTimeScale.ToString("F1");
+                simulationSpeedSlider.value = simulationManager.simulationTimeScale;
+                 if (simulationSpeedValueText != null)
+                 {
+                    simulationSpeedValueText.text = simulationManager.simulationTimeScale.ToString("F1") + "x";
+                 }
             }
         }
         
@@ -274,26 +259,6 @@ public class SettingsMenuManager : MonoBehaviour
     
     #region Event Handlers
     
-    private void OnUnitSystemChanged(int value)
-    {
-        if (isUpdatingUI) return;
-        
-        if (value == 3 || value == 4)
-        {
-            GlobalVariables.DisplayUnitSystem = UnitSystem.Imperial;
-        }
-        else
-        {
-            GlobalVariables.DisplayUnitSystem = UnitSystem.Metric;
-        }
-        
-        if (globalUnitsText != null)
-        {
-            globalUnitsText.text = $"Units: {GlobalVariables.DisplayUnitSystem}";
-        }
-        // Potentially refresh other UI elements dependent on unit system if needed
-    }
-    
     private void OnSimulationTimeChanged(string value)
     {
         if (isUpdatingUI || simulationManager == null) return;
@@ -319,21 +284,16 @@ public class SettingsMenuManager : MonoBehaviour
         }
     }
     
-    private void OnSimulationSpeedChanged(string value)
+    private void OnSimulationSpeedChanged(float value)
     {
         if (isUpdatingUI || simulationManager == null) return;
         
-        if (float.TryParse(value, out float speedValue))
+        // Value comes directly from slider, clamping happens via slider settings
+        simulationManager.simulationTimeScale = value;
+        
+        if (simulationSpeedValueText != null)
         {
-            speedValue = Mathf.Clamp(speedValue, 0.1f, 3600f); 
-            simulationManager.simulationTimeScale = speedValue;
-            // Update the input field to show the potentially clamped value immediately
-            simulationSpeedInputField.text = speedValue.ToString("F1");
-        }
-        else
-        {
-            Debug.LogWarning($"Invalid simulation speed input: {value}. Reverting.");
-            simulationSpeedInputField.text = simulationManager.simulationTimeScale.ToString("F1");
+            simulationSpeedValueText.text = value.ToString("F1") + "x";
         }
     }
     
