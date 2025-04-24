@@ -320,9 +320,13 @@ public class MaterialPropertyEditor : MonoBehaviour
         bool showLeastDimension = isColumn;
         if (coverSection != null) coverSection.SetActive(showCover);
         if (thicknessSection != null) thicknessSection.SetActive(showThickness);
-        if (leastDimensionSection != null) leastDimensionSection.SetActive(showLeastDimension);
+        if (leastDimensionSection != null) 
+        {
+            leastDimensionSection.SetActive(showLeastDimension);
+            if (leastDimensionUnitLabel != null) leastDimensionUnitLabel.gameObject.SetActive(showLeastDimension);
+        }
         if (dimensionsSection != null) dimensionsSection.SetActive(showCover || showThickness || showLeastDimension);
-        if (materialTypeDropdown != null) materialTypeDropdown.gameObject.SetActive(parametersSection != null && parametersSection.activeSelf);
+        if (materialTypeDropdown != null) materialTypeDropdown.gameObject.SetActive(true);
 
         UpdateDimensionLabels();
     }

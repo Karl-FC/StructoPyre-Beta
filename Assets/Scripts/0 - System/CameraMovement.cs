@@ -7,7 +7,7 @@ public class CameraMovement : MonoBehaviour
     private Rigidbody rb;
     private ControlThings inputActions;
 
-    [SerializeField] float walkSpeed = 3.0f, CamSensitivity = 1.0f;
+    [SerializeField] public float walkSpeed = 3.0f, CamSensitivity = 1.0f;
     [SerializeField] private DPadController dPadController;
 
     private void Awake()

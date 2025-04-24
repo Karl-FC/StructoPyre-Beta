@@ -15,6 +15,12 @@ public static class GlobalVariables
 
 //SETTINGS
     public static bool isDPadEnabled { get; set; } = false;
+    // For consistency with our new settings panel
+    public static bool IsDpadActive
+    {
+        get { return isDPadEnabled; }
+        set { isDPadEnabled = value; }
+    }
     public static bool userOnMobile { get; set; } = false;
     public static bool isMouseVisible { get; set; } = false;
     public static bool playerCanMove { get; set; } = false;
