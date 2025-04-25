@@ -25,6 +25,7 @@ StructoPyre is a next-generation, accessible fire simulation web application des
 - [Technical Stack](#technical-stack)
 - [Research & Methodology](#research--methodology)
 - [References](#references)
+- [Contact Us](#contact-us)
 - [License](#license)
 
 ---
@@ -64,10 +65,10 @@ Traditional fire simulation and structural analysis software are often expensive
 
 ## How It Works
 
-1. **Import Model:** Upload your building’s `.obj` file (optionally with `.mtl`).
+1. **Import Model:** Upload your building's `.obj` file (optionally with `.mtl`).
 2. **Assign Properties:** Use the UI to map model parts to ACI element types (slab, beam, wall, column), aggregate types, and input required properties (cover, thickness, restraint, etc.).
 3. **Start Simulation:** Place fire sources and run the simulation.
-4. **Real-Time Analysis:** The app checks each element’s fire resistance against ACI tables/formulas for the current simulation time.
+4. **Real-Time Analysis:** The app checks each element's fire resistance against ACI tables/formulas for the current simulation time.
 5. **Visualize Results:** Elements that fail ACI requirements are highlighted, and evacuation routes are dynamically updated.
 
 ---
@@ -114,6 +115,17 @@ Traditional fire simulation and structural analysis software are often expensive
 
 ---
 
+## Contact Us
+
+Have questions, feedback, or want to connect?
+
+- **Email:** [karlfc5@proton.me](mailto:karlfc5@proton.me)
+- **GitHub:** [Karl-FC/StructoPyre-Beta](https://github.com/Karl-FC/StructoPyre-Beta)
+- **Facebook:** [StructoPyre Page](https://www.facebook.com/profile.php?id=61575412210258)
+- **Demo Video:** [Watch on YouTube](https://youtu.be/Em-H0NGc6Ks)
+
+---
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
@@ -122,7 +134,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-Developed by Bakal-Area.net, Karl-FC and collaborators. Special thanks to fire safety professionals, all field testers,  our thesis advisor, and DA LAB.
+Developed by Bakal-Area.net, Karl-FC and collaborators. Special thanks to fire safety professionals, all field testers, our thesis advisor, and DA LAB.
 
 ---
 
