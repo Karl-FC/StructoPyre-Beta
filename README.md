@@ -5,7 +5,7 @@
 ---
 
 ## 📖 How to Use
-See the [Howto.md](./Howto.md) for detailed usage instructions.
+See the [How to Use](./Howto.md) for detailed usage instructions.
 
 ---
 
@@ -76,7 +76,7 @@ Traditional fire simulation and structural analysis software are often expensive
 
 ### Web Version
 
-1. Visit the hosted web app (URL TBD).
+1. Visit the hosted web app [StructoPyre Beta](https://structopyre.vercel.app/)
 2. Import your `.obj` model.
 3. Follow the on-screen instructions to assign properties and run simulations.
 
