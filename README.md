@@ -4,6 +4,11 @@
 
 ---
 
+## 📖 How to Use
+See the [Howto.md](./Howto.md) for detailed usage instructions.
+
+---
+
 ## Overview
 
 StructoPyre is a next-generation, accessible fire simulation web application designed to analyze the structural integrity of concrete buildings and evacuation dynamics during fire scenarios. The app leverages the ACI 216.1-14(19) standard to provide real-time, visual feedback on fire resistance and safety, making advanced fire engineering tools available to a broader audience.
